@@ -7,6 +7,17 @@ StreamTouch is an Android game-streaming app built on [Moonlight](https://moonli
 [Sunshine](https://github.com/LizardByte/Sunshine); your phone shows the picture and becomes the controller. It is designed to go
 with the WoW addon **Streaming Touch 2.0**, which adds the spell ring and on-screen helpers inside the game.
 
+## Screenshots
+
+| | |
+| --- | --- |
+| ![In game](captures/1-en-jeu.jpg) | ![Auto run](captures/2-course-auto.jpg) |
+| In game: move stick, camera stick, gold-and-leather buttons | Auto run card |
+| ![Round menu](captures/3-menu-rond.jpg) | ![Swiss keyboard](captures/4-clavier-suisse.jpg) |
+| Round menu | Swiss PC keyboard with voice typing |
+| ![Settings](captures/5-reglages.jpg) | ![Customize buttons](captures/6-boutons.jpg) |
+| Settings | Customize buttons (shape, color, icon) |
+
 ## Features
 
 | Part | What it does |
@@ -67,6 +78,8 @@ World of Warcraft is a trademark of Blizzard Entertainment.
 - **Style or et cuir**, menu rond, guide intégré, mode tactile ou mode manette au choix.
 - **Clavier** : le clavier suisse de l'appli en Suisse, sinon le clavier du téléphone dans ta langue.
 - **Langues** : français si le téléphone est en français, anglais sinon.
+
+Captures d'écran : voir plus haut (dossier `captures/`).
 
 **Installer :** télécharge `StreamTouch-1.0.0.apk` dans **Releases**, installe-le, ajoute ton PC et associe-le à Sunshine,
 puis lance un stream. Le menu rond (bouton Menu, ou maintenir Clavier) donne le guide et les réglages.
