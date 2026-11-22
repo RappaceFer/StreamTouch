@@ -3,6 +3,9 @@
 **Play World of Warcraft on your Android phone, streamed from your PC, with touch controls made for it.**
 Made in Rappace · version 1.0.0 · [Français plus bas](#français)
 
+**New here? Read the [step-by-step guide](GUIDE.md)**: Sunshine on the PC, StreamTouch on the phone, Tailscale to play away
+from home, the Magic Packet to turn the PC on remotely, and the WoW addon.
+
 StreamTouch is an Android game-streaming app built on [Moonlight](https://moonlight-stream.org). Your PC runs the game and
 [Sunshine](https://github.com/LizardByte/Sunshine); your phone shows the picture and becomes the controller. It is designed to go
 with the WoW addon **Streaming Touch 2.4.0**, which adds the spell ring and on-screen helpers inside the game.
@@ -94,6 +97,9 @@ World of Warcraft is a trademark of Blizzard Entertainment.
 ---
 
 ## Français
+
+**Pour commencer, lis le [guide pas à pas](GUIDE-FR.md)** : Sunshine sur le PC, StreamTouch sur le téléphone, Tailscale pour
+jouer hors de chez toi, le Magic Packet pour allumer le PC à distance, et l'addon WoW.
 
 **StreamTouch** permet de jouer à World of Warcraft sur un téléphone Android : le PC fait tourner le jeu et
 [Sunshine](https://github.com/LizardByte/Sunshine), le téléphone affiche l'image et devient la manette. L'appli est construite sur
