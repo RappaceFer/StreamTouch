@@ -110,6 +110,32 @@ Réglages facultatifs de Rappace, dans le dossier [`reglages-wow`](reglages-wow)
 - **Bouton 2** (maintenu) : deuxième couche de sorts. **Target** maintenu : le cadavre le plus proche à fouiller.
 - **Clavier** : le clavier (maintenu : le menu rond, avec le guide intégré et tous les réglages).
 
+## 8. L'appli et l'addon ensemble : appui, appui long, deux couches
+
+L'appli ne connaît pas tes sorts : elle envoie des clics et des touches, et l'addon décide quoi lancer.
+
+**Les boutons de l'arc de sorts**
+- **Appui court** : lance le sort du bouton, toujours ton meilleur rang appris.
+- **Appui long** (garde le doigt ½ seconde) : l'appli envoie un clic droit, et l'addon lance le **second sort** du bouton.
+  Exemples pour un chasseur : Tir des Arcanes / Visée, Morsure de serpent / Morsure de scorpide, Raptor / Mangouste,
+  Appeler le familier / Renvoyer. Pour choisir : `/stouch` > éditeur de l'arc de sorts > touche le bouton > **Maintien** > **Choisir…**.
+- Un bouton peut aussi être un **sous-menu** : il ouvre une bulle avec les boutons d'une autre page (Familier, Pièges…).
+- Les sorts pas encore appris restent cachés et apparaissent tout seuls quand tu les apprends.
+
+**Les pages de l'arc**
+- **Couche 2** : tant que tu maintiens le bouton Couche 2 de l'appli (il envoie la touche F12), l'arc montre la page
+  « Couche 2 » (pour le chasseur : la Mêlée). Tu lâches, il revient à la page d'avant.
+- **En combat / Hors combat** : la page qui vient toute seule au début et à la fin d'un combat (pour le chasseur : Tirs en combat).
+- **Posture / forme** : la page qui vient toute seule quand tu prends une forme (ours, félin, posture défensive, camouflage…).
+- **Flèches < >** à côté de l'arc pour changer de page à la main (elles se cachent dans `/stouch` si tu ne t'en sers pas).
+- Le rôle de chaque page se règle dans l'éditeur de l'arc : sélectionne la page, puis Couche 2, En combat, Hors combat, Posture / forme.
+
+**Les autres boutons de l'appli, côté jeu**
+- **Target maintenu** (touche F10) : vise le cadavre à fouiller devant toi. Un appui simple sur le joystick droit cible.
+- **Joystick gauche vers la gauche ou la droite** : ton personnage fait un pas de côté au lieu de tourner (touches A et D).
+  La caméra se tourne avec le joystick droit. Tu peux couper ce réglage dans `/stouch` > Commandes.
+- **Clavier** : quand tu écris, la ligne du chat monte au-dessus du clavier du téléphone.
+
 ## Problèmes fréquents
 
 - **Le PC n'apparaît pas** : même réseau ? Sinon ajoute-le avec son adresse (locale ou `100.x.x.x` de Tailscale).

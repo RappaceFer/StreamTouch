@@ -107,6 +107,32 @@ The addon's texts are in French.
 - **Layer 2** (hold): second spell layer. **Target** held: nearest corpse to loot.
 - **Keyboard**: the keyboard (hold: the round menu, with the built-in guide and all settings).
 
+## 8. App and addon together: tap, hold, two layers
+
+The app does not know your spells: it sends clicks and keys, and the addon decides what to cast.
+
+**Spell arc buttons**
+- **Tap**: casts the button's spell, always your highest rank.
+- **Hold** (keep your finger down ½ second): the app sends a right click and the addon casts the button's **second spell**.
+  Hunter examples: Arcane Shot / Aimed Shot, Serpent Sting / Scorpid Sting, Raptor Strike / Mongoose Bite, Call Pet / Dismiss Pet.
+  To choose: `/stouch` > spell arc editor > tap the button > **Maintien** (hold) > **Choisir…** (the addon is in French).
+- A button can also be a **submenu**: it opens a bubble with the buttons of another page (Pet, Traps…).
+- Spells you have not learned yet stay hidden and appear on their own once learned.
+
+**Arc pages**
+- **Layer 2**: while you hold the app's Layer 2 button (it sends the F12 key), the arc shows the "Layer 2" page
+  (Melee for a hunter). Let go and it goes back to the previous page.
+- **In combat / Out of combat**: the page that comes on its own when a fight starts and ends (Shots in combat for a hunter).
+- **Stance / form**: the page that comes on its own when you take a form (bear, cat, defensive stance, stealth…).
+- **< > arrows** next to the arc to change page by hand (hide them in `/stouch` if you do not use them).
+- Each page's role is set in the arc editor: select the page, then Layer 2, In combat, Out of combat, Stance / form.
+
+**The app's other buttons, in game**
+- **Target held** (F10 key): targets the corpse to loot in front of you. A single tap on the right stick targets.
+- **Left stick left or right**: your character side-steps instead of turning (A and D keys). Turn the camera with the right
+  stick. You can switch this off in `/stouch` > Commands.
+- **Keyboard**: while you type, the chat input line moves above the phone keyboard.
+
 ## Common problems
 
 - **The PC does not show up**: same network? Otherwise add it by address (local, or Tailscale's `100.x.x.x`).
