@@ -127,6 +127,7 @@ public final class EcranTactile extends View implements Doigts.Sortie, ActionTac
         coureur = dessin(R.drawable.st_ic_person_simple_run);
         oeil = dessin(R.drawable.st_ic_compass);
         appliquerStyles();
+        ReglagesPartage.reglagesDOrigine(jeu); // nouvelle installation : les réglages d'origine de StreamTouch
         TouchConfig.getClavierChoix(jeu); // fixe le choix du clavier dès la première partie
         menu = new MenuRond(jeu, this);
         // Le jeu se ferme : on lâche tout et le menu rond disparaît avec lui.
@@ -862,6 +863,7 @@ public final class EcranTactile extends View implements Doigts.Sortie, ActionTac
                     rafraichir();
                 })
                 .setNegativeButton(jeu.getString(R.string.st_annuler), null).show(), dp));
+        bouton(liste, jeu.getString(R.string.st_r_exporter), () -> ReglagesPartage.exporter(jeu));
         fenetre.show();
         Parure.habiller(fenetre, dp);
         if (fenetre.getWindow() != null) fenetre.getWindow().setLayout(Math.min(getWidth(), Math.round(430 * dp)), -2);

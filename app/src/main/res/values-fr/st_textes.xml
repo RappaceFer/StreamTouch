@@ -112,4 +112,6 @@
     <string name="st_r_dem_tactile">Mode tactile d\'abord (joysticks et boutons)</string>
     <string name="st_r_dem_manette">Mode manette d\'abord (seulement Esc et Clavier)</string>
     <string name="st_r_aide_clavier">"  (maintenir : ouvre le menu, utile si Menu est caché)"</string>
+    <string name="st_r_exporter">📤 Exporter mes réglages</string>
+    <string name="st_r_exporte">Réglages enregistrés dans Téléchargements : StreamTouch-reglages.json</string>
 </resources>

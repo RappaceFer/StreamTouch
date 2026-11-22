@@ -112,4 +112,6 @@
     <string name="st_r_dem_tactile">Touch mode first (sticks and buttons)</string>
     <string name="st_r_dem_manette">Controller mode first (only Esc and Keyboard)</string>
     <string name="st_r_aide_clavier">"  (hold: opens the menu, handy if Menu is hidden)"</string>
+    <string name="st_r_exporter">📤 Export my settings</string>
+    <string name="st_r_exporte">Settings saved in Downloads: StreamTouch-reglages.json</string>
 </resources>
