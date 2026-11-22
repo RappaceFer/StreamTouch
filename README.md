@@ -42,6 +42,12 @@ with the WoW addon **Streaming Touch 2.0**, which adds the spell ring and on-scr
 2. Open StreamTouch, add your PC and pair it with Sunshine, like any Moonlight client.
 3. Start a stream: the touch controls appear over the game. Open the round menu (Menu button, or hold Keyboard) for the guide and settings.
 
+### Optional: Rappace's WoW interface layout
+
+The file [`reglages-wow/disposition-mode-edition.txt`](reglages-wow/disposition-mode-edition.txt) is the Edit Mode layout
+(bars, frames, minimap) used with StreamTouch. To use it: copy the whole text, then in WoW press Esc > Edit Mode >
+layout menu > **Import**, paste it and give it a name. Nothing changes in your game unless you import it yourself.
+
 ## Build from source
 
 Requirements: JDK 17, Android SDK (compileSdk 37) and NDK 29.0.14206865. Clone with submodules (`git clone --recursive`).
@@ -83,6 +89,11 @@ Captures d'écran : voir plus haut (dossier `captures/`).
 
 **Installer :** télécharge `StreamTouch-1.0.0.apk` dans **Releases**, installe-le, ajoute ton PC et associe-le à Sunshine,
 puis lance un stream. Le menu rond (bouton Menu, ou maintenir Clavier) donne le guide et les réglages.
+
+**Disposition d'interface WoW (facultatif) :** le fichier [`reglages-wow/disposition-mode-edition.txt`](reglages-wow/disposition-mode-edition.txt)
+contient la disposition du Mode Édition (barres, cadres, mini-carte) utilisée avec StreamTouch. Copie tout le texte, puis dans WoW :
+Échap > Mode Édition > menu des dispositions > **Importer**, colle-le et donne-lui un nom. Rien ne change dans ton jeu
+tant que tu ne l'importes pas toi-même.
 
 Logiciel libre sous licence **GPL v3**, comme Moonlight. Projet non officiel, sans lien avec Blizzard Entertainment.
 Made in Rappace.
