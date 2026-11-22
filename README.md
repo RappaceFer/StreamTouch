@@ -5,7 +5,7 @@ Made in Rappace · version 1.0.0 · [Français plus bas](#français)
 
 StreamTouch is an Android game-streaming app built on [Moonlight](https://moonlight-stream.org). Your PC runs the game and
 [Sunshine](https://github.com/LizardByte/Sunshine); your phone shows the picture and becomes the controller. It is designed to go
-with the WoW addon **Streaming Touch 2.0**, which adds the spell ring and on-screen helpers inside the game.
+with the WoW addon **Streaming Touch 2.4.0**, which adds the spell ring and on-screen helpers inside the game.
 
 ## Screenshots
 
@@ -33,7 +33,7 @@ with the WoW addon **Streaming Touch 2.0**, which adds the spell ring and on-scr
 ## What you need
 
 - A Windows PC with World of Warcraft and [Sunshine](https://github.com/LizardByte/Sunshine) (or NVIDIA GameStream).
-- The WoW addon **Streaming Touch 2.0** in `Interface/AddOns` (recommended).
+- The WoW addon **Streaming Touch 2.4.0** in `Interface/AddOns` (recommended).
 - An Android 8.0 or newer phone (64-bit ARM).
 
 ## Install
@@ -56,6 +56,16 @@ The addon (version 2.4 or newer) can export and import its settings as text: `/s
 (spell arc, round menu, chat, bars). Copy the whole text, open **Import settings**, paste it and press **Import**: the
 character's Streaming Touch settings are replaced and the interface reloads. On another class, the arc layout is kept and the
 spells are the ones suggested for your class. These are also the addon's default settings for a new character.
+
+## WoW addon: Streaming Touch
+
+The addon is in [`addon/StreamingTouch`](addon/StreamingTouch) (MIT license, written from scratch, no other addon needed).
+It adds the spell arc around the camera joystick (pages that follow combat, a second layer and stances / forms), the round menu,
+the chat placement above the phone keyboard, account profiles and settings export / import.
+
+1. Download `StreamingTouch-2.4.0.zip` from the **Releases** page.
+2. Unzip it into `World of Warcraft/_forever_/Interface/AddOns` (or `_retail_`, `_classic_era_`…), so you get `AddOns/StreamingTouch`.
+3. Start the game. Settings: minimap button or `/stouch`.
 
 ## Build from source
 
@@ -87,7 +97,7 @@ World of Warcraft is a trademark of Blizzard Entertainment.
 
 **StreamTouch** permet de jouer à World of Warcraft sur un téléphone Android : le PC fait tourner le jeu et
 [Sunshine](https://github.com/LizardByte/Sunshine), le téléphone affiche l'image et devient la manette. L'appli est construite sur
-[Moonlight](https://moonlight-stream.org) et va avec l'addon WoW **Streaming Touch 2.0**.
+[Moonlight](https://moonlight-stream.org) et va avec l'addon WoW **Streaming Touch 2.4.0**.
 
 - **Commandes tactiles** : joystick de déplacement, joystick caméra, l'écran comme une souris, et des boutons que l'on place, cache et habille à son goût.
 - **Style or et cuir**, menu rond, guide intégré, mode tactile ou mode manette au choix.
@@ -110,6 +120,10 @@ tant que tu ne l'importes pas toi-même.
 (arc de sorts, menu rond, chat, barres). Copie tout le texte, ouvre **Importer des réglages**, colle-le et appuie sur **Importer** :
 les réglages de Streaming Touch du personnage sont remplacés et l'interface se recharge. Sur une autre classe, la disposition de l'arc
 est gardée et les sorts sont ceux conseillés pour ta classe. Ce sont aussi les réglages de base de l'addon pour un nouveau personnage.
+
+**Addon WoW Streaming Touch :** il est dans [`addon/StreamingTouch`](addon/StreamingTouch) (licence MIT, écrit de zéro, aucun autre
+addon nécessaire). Télécharge `StreamingTouch-2.4.0.zip` dans **Releases** et dézippe-le dans
+`World of Warcraft/_forever_/Interface/AddOns` pour obtenir `AddOns/StreamingTouch`. Réglages : bouton de la mini-carte ou `/stouch`.
 
 Logiciel libre sous licence **GPL v3**, comme Moonlight. Projet non officiel, sans lien avec Blizzard Entertainment.
 Made in Rappace.

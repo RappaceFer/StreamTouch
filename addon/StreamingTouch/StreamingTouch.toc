@@ -1,0 +1,15 @@
+## Interface: 16001
+## Title: Streaming Touch
+## Notes: Touch controls for WoW streamed to a phone or tablet: spell arc around the camera joystick with a hold-to-show second layer, radial menu, everything customizable. Settings: minimap button or /stouch
+## Notes-frFR: Commandes tactiles pour WoW en streaming sur téléphone ou tablette : arc de sorts autour du joystick avec une deuxième couche, menu rond, tout se personnalise. Réglages : bouton de la mini-carte ou /stouch
+## Author: Rappace
+## Version: 2.4.0
+## X-License: MIT
+## IconTexture: Interface\AddOns\StreamingTouch\Media\Icon
+## SavedVariablesPerCharacter: StreamingTouchDB
+## SavedVariables: StreamingTouchAccount
+
+Partage.lua
+Defaults.lua
+Core.lua
+Radial.lua
