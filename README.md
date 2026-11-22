@@ -48,6 +48,15 @@ The file [`reglages-wow/disposition-mode-edition.txt`](reglages-wow/disposition-
 (bars, frames, minimap) used with StreamTouch. To use it: copy the whole text, then in WoW press Esc > Edit Mode >
 layout menu > **Import**, paste it and give it a name. Nothing changes in your game unless you import it yourself.
 
+### Optional: Rappace's Streaming Touch settings
+
+The addon (version 2.4 or newer) can export and import its settings as text: `/stouch` > **Commands** tab >
+**Export my settings** / **Import settings**. The file
+[`reglages-wow/streaming-touch-papa-rapace.txt`](reglages-wow/streaming-touch-papa-rapace.txt) holds the settings of Papa Rapace
+(spell arc, round menu, chat, bars). Copy the whole text, open **Import settings**, paste it and press **Import**: the
+character's Streaming Touch settings are replaced and the interface reloads. On another class, the arc layout is kept and the
+spells are the ones suggested for your class. These are also the addon's default settings for a new character.
+
 ## Build from source
 
 Requirements: JDK 17, Android SDK (compileSdk 37) and NDK 29.0.14206865. Clone with submodules (`git clone --recursive`).
@@ -94,6 +103,13 @@ puis lance un stream. Le menu rond (bouton Menu, ou maintenir Clavier) donne le 
 contient la disposition du Mode Édition (barres, cadres, mini-carte) utilisée avec StreamTouch. Copie tout le texte, puis dans WoW :
 Échap > Mode Édition > menu des dispositions > **Importer**, colle-le et donne-lui un nom. Rien ne change dans ton jeu
 tant que tu ne l'importes pas toi-même.
+
+**Réglages Streaming Touch de Rappace (facultatif) :** l'addon (2.4 ou plus récent) sait exporter et importer ses réglages en texte :
+`/stouch` > onglet **Commandes** > **Exporter mes réglages** / **Importer des réglages**. Le fichier
+[`reglages-wow/streaming-touch-papa-rapace.txt`](reglages-wow/streaming-touch-papa-rapace.txt) contient les réglages de Papa Rapace
+(arc de sorts, menu rond, chat, barres). Copie tout le texte, ouvre **Importer des réglages**, colle-le et appuie sur **Importer** :
+les réglages de Streaming Touch du personnage sont remplacés et l'interface se recharge. Sur une autre classe, la disposition de l'arc
+est gardée et les sorts sont ceux conseillés pour ta classe. Ce sont aussi les réglages de base de l'addon pour un nouveau personnage.
 
 Logiciel libre sous licence **GPL v3**, comme Moonlight. Projet non officiel, sans lien avec Blizzard Entertainment.
 Made in Rappace.
