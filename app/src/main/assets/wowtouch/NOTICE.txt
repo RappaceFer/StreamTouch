@@ -1,0 +1,16 @@
+StreamTouch — Made in Rappace
+
+Appli de streaming pour jouer à World of Warcraft sur téléphone, avec l’addon WoW « Streaming Touch ».
+Commandes tactiles, joysticks, menu rond, clavier suisse, parure or et cuir, styles des boutons et réglages :
+écrits pour Rappace.
+
+Moteur de streaming : Moonlight (moonlight-stream.org), logiciel libre sous licence GPL-3.0,
+voir licenses/Moonlight-GPL-3.0.txt. L’appli entière, construite sur Moonlight, reste sous GPL-3.0.
+Icônes : game-icons.net (Lorc, Delapouite, Caro Asercion, sbed), licence CC BY 3.0,
+voir licenses/GameIcons-CC-BY-3.0.txt (qui a dessiné quoi). La dorure et le relief sont ajoutés par l’appli.
+
+Icône de l’appli : dessin fourni par Rappace.
+
+Projet non officiel, sans lien avec Moonlight, game-icons.net ou Blizzard Entertainment.
+World of Warcraft est une marque de Blizzard Entertainment.
+Aucun Wine, DXVK ni pilote graphique n’est inclus.
