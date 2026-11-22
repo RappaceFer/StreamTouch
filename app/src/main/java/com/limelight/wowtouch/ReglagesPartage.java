@@ -28,7 +28,7 @@ import java.util.Map;
  * ceux de res/raw/st_reglages_defaut.json s'il existe (une appli déjà réglée garde les siens).
  */
 final class ReglagesPartage {
-    private static final String STYLES = "wowtouch_button_styles", FAIT = "touch_defaults_applied";
+    private static final String STYLES = "wowtouch_button_styles", FAIT = "touch_defaults_v2";
 
     private ReglagesPartage() {}
 
@@ -100,7 +100,11 @@ final class ReglagesPartage {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(c);
         if (prefs.getBoolean(FAIT, false)) return;
         boolean dejaRegle = false;
-        for (String cle : prefs.getAll().keySet()) if (aExporter(cle)) dejaRegle = true;
+        // Réglé à la main = une place, une taille, une transparence ou un bouton caché, ou un style de bouton.
+        for (String cle : prefs.getAll().keySet()) {
+            if (cle.startsWith("touch_") && !cle.equals("touch_keyboard_mode") && !cle.startsWith("touch_defaults")) dejaRegle = true;
+        }
+        if (!c.getSharedPreferences(STYLES, Context.MODE_PRIVATE).getAll().isEmpty()) dejaRegle = true;
         int id = c.getResources().getIdentifier("st_reglages_defaut", "raw", c.getPackageName());
         if (!dejaRegle && id != 0) {
             try (InputStream in = c.getResources().openRawResource(id)) {
