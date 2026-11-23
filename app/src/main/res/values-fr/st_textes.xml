@@ -15,7 +15,8 @@
     <string name="st_plonger">Plonger</string>
     <string name="st_maj">Maj</string>
     <string name="st_a_manette">Mode manette</string>
-    <string name="st_a_manette_aide">Esc ou Clavier : double appui</string>
+    <string name="st_a_tactile">Mode tactile</string>
+    <string name="st_a_manette_aide">Clavier : double appui</string>
     <string name="st_a_boutons">Boutons</string>
     <string name="st_a_boutons_aide">Forme, couleur, icône</string>
     <string name="st_a_deplacer">Déplacer</string>
@@ -55,7 +56,7 @@
     <string name="st_deplacer_toast">Glisse les commandes, puis touche Terminer en haut à gauche</string>
     <string name="st_enregistre">Disposition enregistrée</string>
     <string name="st_description">Commandes tactiles Streaming Touch</string>
-    <string name="st_g_esc">Échap · double appui : mode manette</string>
+    <string name="st_g_esc">Échap</string>
     <string name="st_g_clavier">Clavier pour écrire · maintien : menu · double appui : mode manette</string>
     <string name="st_g_menu">Menu de l\'appli : boutons, réglages, Maj / Ctrl / Alt</string>
     <string name="st_g_cible">Appui : ennemi suivant · maintien : cadavre</string>

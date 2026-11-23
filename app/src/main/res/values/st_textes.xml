@@ -15,7 +15,8 @@
     <string name="st_plonger">Dive</string>
     <string name="st_maj">Shift</string>
     <string name="st_a_manette">Controller mode</string>
-    <string name="st_a_manette_aide">Esc or Keyboard: double tap</string>
+    <string name="st_a_tactile">Touch mode</string>
+    <string name="st_a_manette_aide">Keyboard: double tap</string>
     <string name="st_a_boutons">Buttons</string>
     <string name="st_a_boutons_aide">Shape, color, icon</string>
     <string name="st_a_deplacer">Move</string>
@@ -55,7 +56,7 @@
     <string name="st_deplacer_toast">Drag the controls, then tap Done at the top left</string>
     <string name="st_enregistre">Layout saved</string>
     <string name="st_description">Streaming Touch controls</string>
-    <string name="st_g_esc">Escape · double tap: controller mode</string>
+    <string name="st_g_esc">Escape</string>
     <string name="st_g_clavier">Keyboard to type · hold: menu · double tap: controller mode</string>
     <string name="st_g_menu">App menu: buttons, settings, Shift / Ctrl / Alt</string>
     <string name="st_g_cible">Tap: next enemy · hold: corpse</string>

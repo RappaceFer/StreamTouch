@@ -1,7 +1,7 @@
 # StreamTouch
 
 **Play World of Warcraft on your Android phone, streamed from your PC, with touch controls made for it.**
-Made in Rappace · version 1.1.0 · [Français plus bas](#français)
+Made in Rappace · version 1.1.1 · [Français plus bas](#français)
 
 **New here? Read the [step-by-step guide](GUIDE.md)**: Sunshine on the PC, StreamTouch on the phone, Tailscale to play away
 from home, the Magic Packet to turn the PC on remotely, and the WoW addon.
@@ -43,7 +43,7 @@ with the WoW addon **Streaming Touch 2.5.0**, which adds the spell ring and on-s
 
 ## Install
 
-1. Download `StreamTouch-1.1.0.apk` from the **Releases** page and install it.
+1. Download `StreamTouch-1.1.1.apk` from the **Releases** page and install it.
 2. Open StreamTouch, add your PC and pair it with Sunshine, like any Moonlight client.
 3. Start a stream: the touch controls appear over the game. Open the round menu (Menu button, or hold Keyboard) for the guide and settings.
 
@@ -126,7 +126,7 @@ jouer hors de chez toi, le Magic Packet pour allumer le PC à distance, et l'add
 
 Captures d'écran : voir plus haut (dossier `captures/`).
 
-**Installer :** télécharge `StreamTouch-1.1.0.apk` dans **Releases**, installe-le, ajoute ton PC et associe-le à Sunshine,
+**Installer :** télécharge `StreamTouch-1.1.1.apk` dans **Releases**, installe-le, ajoute ton PC et associe-le à Sunshine,
 puis lance un stream. Le menu rond (bouton Menu, ou maintenir Clavier) donne le guide et les réglages.
 
 **Disposition d'interface WoW (facultatif) :** le fichier [`reglages-wow/disposition-mode-edition.txt`](reglages-wow/disposition-mode-edition.txt)

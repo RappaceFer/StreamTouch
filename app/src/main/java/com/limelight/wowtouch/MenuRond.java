@@ -38,6 +38,12 @@ final class MenuRond {
     private final float dp;
     private Dialog fenetre;
 
+    /** Le nom affiché : le bouton de mode dit vers quel mode il fait passer (manette depuis le tactile, et l'inverse). */
+    private String nomDe(ActionTactile action) {
+        if (action == ActionTactile.MODE_MANETTE && hote.estActive(action)) return activite.getString(R.string.st_a_tactile);
+        return action.nom(activite);
+    }
+
     MenuRond(Activity activite, ActionTactile.Hote hote) {
         this.activite = activite;
         this.hote = hote;
@@ -140,7 +146,7 @@ final class MenuRond {
             for (int i = 0; i < ACTIONS.length; i++) {
                 float a = angle(i), x = cx + (float) Math.cos(a) * r, y = cy + (float) Math.sin(a) * r;
                 pastille(toile, x, y, rAction, ACTIONS[i].icone, hote.estActive(ACTIONS[i]), touche == i, vu);
-                nom(toile, ACTIONS[i].nom(activite), x, y + rAction + 14 * dp, rAction * 2.7f, 11, vu,
+                nom(toile, nomDe(ACTIONS[i]), x, y + rAction + 14 * dp, rAction * 2.7f, 11, vu,
                         touche == i ? Parure.OR_CLAIR : Parure.CREME);
             }
             pastille(toile, cx, cy - 5 * dp, rMilieu, ActionTactile.CLAVIER.icone, false, touche == MILIEU, 1);
@@ -162,7 +168,7 @@ final class MenuRond {
                 ActionTactile action = touche == MILIEU ? ActionTactile.CLAVIER : ACTIONS[touche];
                 float droite = cx + rPlateau + 28 * dp;
                 ecrit.setTextAlign(Paint.Align.LEFT);
-                ecrire(toile, action.nom(activite), droite, cy - 8 * dp, 22, Parure.OR_CLAIR, true);
+                ecrire(toile, nomDe(action), droite, cy - 8 * dp, 22, Parure.OR_CLAIR, true);
                 filet(toile, droite, droite + 150 * dp, cy + 2 * dp);
                 ecrire(toile, action.aide(activite), droite, cy + 20 * dp, 13, Parure.CREME, false);
             }

@@ -32,7 +32,7 @@ Le programme « Desktop » (bureau) suffit : tu lances WoW depuis le bureau pend
 
 ## 2. Sur le téléphone : StreamTouch
 
-1. Télécharge `StreamTouch-1.1.0.apk` dans **Releases** : https://github.com/RappaceFer/StreamTouch/releases
+1. Télécharge `StreamTouch-1.1.1.apk` dans **Releases** : https://github.com/RappaceFer/StreamTouch/releases
 2. Installe-le (Android demande d'autoriser l'installation depuis le navigateur ou le gestionnaire de fichiers).
 3. L'appli arrive **déjà réglée** avec les réglages de Rappace : place des boutons, tailles, transparence, mode tactile au démarrage.
    Tout se change ensuite dans le menu rond (bouton Menu, ou maintenir Clavier) > Réglages.

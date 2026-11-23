@@ -480,17 +480,10 @@ public final class EcranTactile extends View implements Doigts.Sortie, ActionTac
             case CLAVIER: if (!bas) post(this::basculerClavier); return;
             case CADAVRE: if (!bas) post(() -> commandeJeu(WoWMenuShortcuts.command("CORPSE"))); return;
             case ECHAP:
-                // Deux appuis rapides sur Esc : mode manette <-> mode tactile. Échap part quand même à chaque appui.
-                if (!bas) {
-                    long maintenant = SystemClock.uptimeMillis();
-                    if (maintenant - dernierEchap < DOUBLE_MS) {
-                        dernierEchap = -1000;
-                        post(this::basculerMode);
-                    } else dernierEchap = maintenant;
-                }
+                // Esc envoie seulement Échap (Rappace : plus de double appui pour changer de mode).
                 break;
             case COURSE:
-                if (!bas) post(this::carteCourse);
+                // Plus de grande carte « Course auto » (Rappace) : le double appui suffit.
                 break;
             default:
                 break;
