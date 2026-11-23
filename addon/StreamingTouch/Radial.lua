@@ -268,6 +268,44 @@ local function SpellRange(spell)
     if inRange == 1 then return true elseif inRange == 0 then return false end
     return inRange
 end
+-- CH : aides pour les objets des sacs (potions, objets de quête qu'on utilise).
+local function ItemName(id)
+    if not id then return end
+    if C_Item and C_Item.GetItemNameByID then
+        local ok, name = pcall(C_Item.GetItemNameByID, id)
+        if ok and name then return name end
+    end
+    if GetItemInfo then return (GetItemInfo(id)) end
+end
+local function ItemIcon(id)
+    if not id then return end
+    if C_Item and C_Item.GetItemIconByID then
+        local ok, icon = pcall(C_Item.GetItemIconByID, id)
+        if ok and icon then return icon end
+    end
+    if GetItemIcon then return GetItemIcon(id) end
+end
+-- Objets des sacs qui ont un effet « Utiliser : » (potions, nourriture, objets de quête…), un seul par objet.
+local function BagChoices()
+    local list, seen = {}, {}
+    pcall(function()
+        local C = C_Container
+        local slots = (C and C.GetContainerNumSlots) or GetContainerNumSlots
+        local itemId = (C and C.GetContainerItemID) or GetContainerItemID
+        local spellOf = (C_Item and C_Item.GetItemSpell) or GetItemSpell
+        if not (slots and itemId and spellOf) then return end
+        for bag = 0, NUM_BAG_SLOTS or 4 do
+            for slot = 1, slots(bag) or 0 do
+                local id = itemId(bag, slot)
+                if id and not seen[id] and spellOf(id) then
+                    seen[id] = true
+                    list[#list + 1] = {a = "ITEM", item = id, label = ItemName(id), icon = ItemIcon(id)}
+                end
+            end
+        end
+    end)
+    return list
+end
 local function MacroChoices()
     local list = {}
     local global, char = GetNumMacros()
@@ -347,6 +385,8 @@ local function CursorItems()
     elseif kind == "macro" and GetMacroInfo then
         local name, icon = GetMacroInfo(a)
         if name then return {{a = "MACRO", macro = name, label = name, icon = icon}} end
+    elseif kind == "item" and type(a) == "number" then
+        return {{a = "ITEM", item = a, label = ItemName(a), icon = ItemIcon(a)}}
     end
 end
 -- Le grimoire, lu à un seul endroit. pet = true : celui du familier. Pour chaque entrée, visit(e) avec
@@ -749,6 +789,10 @@ function R.Resolve(item)
     elseif item.a == "TEXT" then
         text = item.text
         label = "Macro"
+    elseif item.a == "ITEM" then
+        text = item.item and ("/use item:" .. item.item) or nil
+        label = ItemName(item.item) or item.label or "Objet"
+        icon = ItemIcon(item.item)
     elseif item.a == "SPELL" then
         spell = SpellName(item.spell) or item.name
         label = spell or "?"
@@ -786,6 +830,7 @@ function R.Describe(item)
     local def = R.ACT[item.a]
     if item.a == "MACRO" then return "Ta macro : " .. (item.macro or "?") end
     if item.a == "TEXT" then return ((item.text or ""):gsub("\n", "  ")) end
+    if item.a == "ITEM" then return "Objet du sac : " .. (ItemName(item.item) or item.label or "?") end
     if item.a == "SPELL" then return "Sort : " .. (SpellName(item.spell) or item.name or "?") end
     if item.a == "FLYOUT" then return "Groupe du grimoire : " .. (item.label or "?") .. " (s'ouvre quand on le touche)" end
     if item.a == "PETBAR" then return "La barre du familier du jeu en un bouton (s'ouvre quand on le touche)" end
@@ -803,10 +848,12 @@ end
 function R.HoldName(hold)
     if hold.a == "SPELL" then return SpellName(hold.spell) or hold.name or "Sort" end
     if hold.a == "MACRO" then return hold.macro or "Macro" end
+    if hold.a == "ITEM" then return ItemName(hold.item) or hold.label or "Objet" end
     return hold.label or "Macro"
 end
 function R.HoldIcon(hold)
     if hold.a == "SPELL" then return SpellIcon(hold.spell) or QUESTION end
+    if hold.a == "ITEM" then return ItemIcon(hold.item) or QUESTION end
     if hold.a == "MACRO" then
         local _, icon = GetMacroInfo(hold.macro or "")
         if icon then return icon end
@@ -1282,6 +1329,81 @@ function R.Build()
 end
 
 -- Recharge des sorts, ronde comme le bouton, avec les secondes qui restent (lisibles sur un téléphone).
+-- CH : l'infobulle du jeu sur un bouton : sort (nom, rang, description), objet, familier, ou son nom.
+-- Le doigt sur le petit rond doré du maintien : l'infobulle du second sort (ou objet).
+local function OverBadge(b)
+    local t = b.holdBadge
+    if not (b.hold and t and t:IsShown() and GetCursorPosition and t.GetRect) then return false end
+    local l, bottom, w, h = t:GetRect()
+    if not l then return false end
+    local x, y = GetCursorPosition()
+    local s = (t.GetEffectiveScale and t:GetEffectiveScale()) or b:GetEffectiveScale()
+    x, y = x / s, y / s
+    local m = 4
+    return x >= l - m and x <= l + w + m and y >= bottom - m and y <= bottom + h + m
+end
+local function ShowSpell(tip, spell)
+    local W = addon.book
+    local id = (W and W.Best and W.Best(spell)) or (type(spell) == "number" and spell) or nil
+    if not (id and tip.SetSpellByID) or not pcall(tip.SetSpellByID, tip, id) then return false end
+    -- Le rang (« Rang 3 ») en haut à droite, comme dans le grimoire.
+    local rank = W and W.Subtext and W.Subtext(id)
+    if rank and rank ~= "" then
+        local right = _G and _G[(tip.GetName and tip:GetName() or "GameTooltip") .. "TextRight1"]
+        if right then
+            right:SetText(rank)
+            right:SetTextColor(.6, .6, .6)
+            right:Show()
+        else
+            tip:AddLine(rank, .6, .6, .6)
+        end
+    end
+    return true
+end
+function R.Tooltip(b)
+    local tip = GameTooltip
+    if not tip or not b or not b:IsVisible() then return end
+    R.tipOwner = b
+    local onBadge = OverBadge(b)
+    R.tipOnBadge = onBadge
+    if GameTooltip_SetDefaultAnchor then GameTooltip_SetDefaultAnchor(tip, b) else tip:SetOwner(b, "ANCHOR_LEFT") end
+    local done = false
+    if onBadge then
+        local hold = b.hold
+        if hold.a == "SPELL" then
+            done = ShowSpell(tip, hold.spell)
+        elseif hold.a == "ITEM" and tip.SetItemByID then
+            done = pcall(tip.SetItemByID, tip, hold.item)
+        end
+        if not done then tip:SetText(R.HoldName(hold), 1, .82, .32) end
+        tip:AddLine("Au maintien (appui long)", .3, .9, .95)
+        tip:Show()
+        return
+    end
+    local item = b.item
+    local spell = (item and item.a == "SPELL" and item.spell) or b.spell
+    if b.petSlot and tip.SetPetAction then
+        done = pcall(tip.SetPetAction, tip, b.petSlot)
+    elseif b.itemID and tip.SetItemByID then
+        done = pcall(tip.SetItemByID, tip, b.itemID)
+    elseif spell then
+        done = ShowSpell(tip, spell)
+    end
+    if not done then tip:SetText(b.name or "?", 1, .82, .32) end
+    if b.hold then tip:AddLine("Maintien : " .. R.HoldName(b.hold), .3, .9, .95) end
+    tip:Show()
+end
+function R.HideTooltip(b)
+    if R.tipOwner == b then R.tipOwner = nil end
+    if GameTooltip and GameTooltip.GetOwner and GameTooltip:GetOwner() == b then GameTooltip:Hide() end
+end
+-- Le doigt glisse du bouton au petit rond (ou l'inverse) : l'infobulle change.
+function R.WatchTooltip()
+    local b = R.tipOwner
+    if not b then return end
+    if not b:IsVisible() then R.tipOwner = nil return end
+    if OverBadge(b) ~= (R.tipOnBadge or false) then R.Tooltip(b) end
+end
 function R.AddCooldown(b)
     b.cooldown = CreateFrame("Cooldown", nil, b, "CooldownFrameTemplate")
     b.cooldown:SetAllPoints(b.icon)
@@ -1299,6 +1421,8 @@ function R.NewItem()
         if self.run and not self.run() then Say((self.name or "?") .. " n'est pas disponible ici.") end
     end)
     SecureHandlerWrapScript(b, "OnClick", R.main, R.PRE, R.POST)
+    b:HookScript("OnEnter", function(self) R.Tooltip(self) end)
+    b:HookScript("OnLeave", function(self) R.HideTooltip(self) end)
     -- Un sort lâché sur l'arc depuis le grimoire : il se met à cette place.
     b:SetScript("OnReceiveDrag", function(self) R.DropOn(self) end)
     R.pool[n] = b
@@ -1990,11 +2114,13 @@ function R.Layout()
             local pe = petSlot and R.PetBar()[petSlot]
             local autoName = pe and pe.allowed and not pe.token and pe.name or nil
             -- Au maintien : un second sort ou une macro, si la case en a un (sort, macro ou macro libre).
-            local hold = (not autoName and (item.a == "SPELL" or item.a == "MACRO" or item.a == "TEXT")) and item.hold or nil
+            local hold = (not autoName and (item.a == "SPELL" or item.a == "MACRO" or item.a == "TEXT" or item.a == "ITEM"))
+                and item.hold or nil
             if hold and not R.Known(hold) then hold = nil end
             local holdSpell = hold and hold.a == "SPELL" and (SpellName(hold.spell) or hold.name) or nil
             local holdMacro = hold and hold.a == "MACRO" and hold.macro or nil
-            local holdText = hold and hold.a == "TEXT" and hold.text or nil
+            local holdText = hold and ((hold.a == "TEXT" and hold.text) or (hold.a == "ITEM" and hold.item
+                and ("/use item:" .. hold.item))) or nil
             if not (holdSpell or holdMacro or holdText) then hold = nil end
             b:SetAttribute("type2", autoName and "macro" or holdSpell and "spell" or (holdMacro or holdText) and "macro" or nil)
             b:SetAttribute("spell2", holdSpell)
@@ -2010,6 +2136,7 @@ function R.Layout()
             b.spell = spell
             b.page, b.item = p, item
             b.spellID = (item.a == "SPELL" and type(item.spell) == "number") and item.spell or nil
+            b.itemID = item.a == "ITEM" and item.item or nil
             b.name = label
             R.Paint(b, size, icon, item.color or page.color, item.shape or cfg.shape, cfg.labels and label or "")
             if item.a == "FLYOUT" or item.a == "PETBAR" or item.a == "GROUP" then
@@ -2293,6 +2420,45 @@ function R.UpdateButton(b)
         b.hadSpell = true
         return
     end
+    if b.itemID then
+        local count = 0
+        local counter = (C_Item and C_Item.GetItemCount) or GetItemCount
+        if counter then
+            local ok, n = pcall(counter, b.itemID)
+            if ok and type(n) == "number" and not Secret(n) then count = n end
+        end
+        if not b.countText then
+            b.countText = b:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
+            b.countText:SetPoint("BOTTOMRIGHT", b.icon, "BOTTOMRIGHT", -3, 3)
+        end
+        b.countText:SetText(count > 1 and tostring(count) or "")
+        b.countText:Show()
+        local cooldown = (C_Container and C_Container.GetItemCooldown) or GetItemCooldown
+        local start, duration
+        if cooldown then
+            local ok, s, d = pcall(cooldown, b.itemID)
+            if ok then start, duration = s, d end
+        end
+        if Secret(start) or Secret(duration) then
+            pcall(b.cooldown.SetCooldown, b.cooldown, start, duration)
+        elseif start and duration and duration > 1.5 then
+            b.cooldown:SetCooldown(start, duration)
+        else
+            b.cooldown:SetCooldown(0, 0)
+        end
+        local usable = true
+        local check = (C_Item and C_Item.IsUsableItem) or IsUsableItem
+        if check then
+            local ok, yes = pcall(check, b.itemID)
+            if ok and not Secret(yes) then usable = yes and true or false end
+        end
+        b.dim = (count > 0 and usable) and 1 or .4
+        R.Tint(b)
+        R.Lit(b, false)
+        b.hadSpell = true
+        return
+    end
+    if b.countText then b.countText:Hide() end
     if b.spell then
         R.ShowCooldown(b.cooldown, b.spell)
         local pet = R.petSpells and R.petSpells[b.spell]
@@ -2361,6 +2527,11 @@ end
 if R.opts.fixed then
     R.ranger = CreateFrame("Frame")
     R.ranger:SetScript("OnUpdate", function(self, elapsed)
+        self.tipWait = (self.tipWait or 0) - (elapsed or 0)
+        if self.tipWait <= 0 then
+            self.tipWait = .1
+            pcall(R.WatchTooltip)
+        end
         self.wait = (self.wait or 0) - (elapsed or 0)
         if self.wait > 0 then return end
         self.wait = .2
@@ -2376,7 +2547,7 @@ if R.opts.fixed then
     for _, event in ipairs({"SPELL_UPDATE_COOLDOWN", "SPELL_UPDATE_USABLE", "ACTIONBAR_UPDATE_STATE",
         "PLAYER_ENTERING_WORLD", "LEARNED_SPELL_IN_TAB", "LEARNED_SPELL_IN_SKILL_LINE", "SPELLS_CHANGED",
         "UNIT_PET", "PET_BAR_UPDATE", "PET_UI_UPDATE", "PET_BAR_UPDATE_COOLDOWN", "START_AUTOREPEAT_SPELL",
-        "STOP_AUTOREPEAT_SPELL", "UPDATE_SHAPESHIFT_FORM", "PLAYER_TARGET_CHANGED"}) do
+        "STOP_AUTOREPEAT_SPELL", "UPDATE_SHAPESHIFT_FORM", "PLAYER_TARGET_CHANGED", "BAG_UPDATE", "BAG_UPDATE_COOLDOWN"}) do
         pcall(R.events.RegisterEvent, R.events, event)
     end
     if R.events.RegisterUnitEvent then R.events:RegisterUnitEvent("UNIT_AURA", "player") else R.events:RegisterEvent("UNIT_AURA") end
@@ -2388,7 +2559,7 @@ R.LEARN_EVENTS = {PLAYER_ENTERING_WORLD = true, LEARNED_SPELL_IN_TAB = true, LEA
     SPELLS_CHANGED = true, UNIT_PET = true, PET_BAR_UPDATE = true}
 R.SPELL_EVENTS.UNIT_PET, R.SPELL_EVENTS.PET_BAR_UPDATE = true, true
 for _, event in ipairs({"PET_UI_UPDATE", "PET_BAR_UPDATE_COOLDOWN", "START_AUTOREPEAT_SPELL", "STOP_AUTOREPEAT_SPELL",
-    "UPDATE_SHAPESHIFT_FORM", "PLAYER_TARGET_CHANGED"}) do R.SPELL_EVENTS[event] = true end
+    "UPDATE_SHAPESHIFT_FORM", "PLAYER_TARGET_CHANGED", "BAG_UPDATE", "BAG_UPDATE_COOLDOWN"}) do R.SPELL_EVENTS[event] = true end
 R.events:SetScript("OnEvent", function(_, event, name)
     if R.SPELL_EVENTS[event] then
         if R.LEARN_EVENTS[event] and R.opts.hideUnknown and R.main and R.cfg and (event ~= "UNIT_PET" or name == "player") then
@@ -2767,11 +2938,11 @@ function R.Commit(item)
     if ed.holdPick then
         ed.holdPick, ed.mode = nil, "props"
         local target = page.items[ed.item or 0]
-        if target and (item.a == "SPELL" or item.a == "MACRO" or item.a == "TEXT") then
+        if target and (item.a == "SPELL" or item.a == "MACRO" or item.a == "TEXT" or item.a == "ITEM") then
             target.hold = {a = item.a, spell = item.spell, macro = item.macro, text = item.text, name = item.name,
-                label = item.label, icon = item.icon}
+                label = item.label, icon = item.icon, item = item.item}
         elseif target then
-            Say("au maintien, on peut mettre un sort ou une macro.")
+            Say("au maintien, on peut mettre un sort, une macro ou un objet.")
         end
         R.Apply()
         return
@@ -2798,7 +2969,7 @@ function R.Drop(index, at)
     if InCombatLockdown() or not R.cfg then return end
     local list = CursorItems()
     if not list then
-        if GetCursorInfo and GetCursorInfo() then Say("on ne peut mettre ici que des sorts et des macros.") end
+        if GetCursorInfo and GetCursorInfo() then Say("on ne peut mettre ici que des sorts, des macros et des objets.") end
         return
     end
     if ClearCursor then ClearCursor() end
@@ -2807,6 +2978,7 @@ function R.Drop(index, at)
     local function Key(item)
         if item.a == "SPELL" then return "S" .. tostring(SpellName(item.spell) or item.label or item.spell) end
         if item.a == "MACRO" then return "M" .. tostring(item.macro) end
+        if item.a == "ITEM" then return "I" .. tostring(item.item) end
         if item.a == "TEXT" then return "T" .. tostring(item.text) end
         if item.a == "FLYOUT" then return "F" .. tostring(item.flyout) end
         if item.a == "PETBAR" then return "B" end
@@ -3145,9 +3317,10 @@ function R.BuildEditor()
     for i = 1, 18 do
         local t = Tile(a, 36, function(self) local c = self.choice
             local text = c.a == "TEXT"
-            local group = c.a == "FLYOUT" or c.a == "PETBAR"
+            local group = c.a == "FLYOUT" or c.a == "PETBAR" or c.a == "ITEM"
             R.Commit({a = c.a, macro = c.macro, spell = c.spell, name = c.label, text = c.text, flyout = c.flyout, slot = c.slot,
-                uid = c.uid, label = (text or group) and c.label or nil, icon = (text or c.a == "FLYOUT") and c.icon or nil}) end)
+                uid = c.uid, item = c.item, label = (text or group) and c.label or nil,
+                icon = (text or c.a == "FLYOUT" or c.a == "ITEM") and c.icon or nil}) end)
         t:SetPoint("TOPLEFT", 14 + ((i - 1) % 6) * 62, -54 - math.floor((i - 1) / 6) * 56)
         a.tiles[i] = t
     end
@@ -3326,7 +3499,7 @@ function R.RefreshProps()
     if hasName and not p.name:HasFocus() then p.name:SetText(R.Get("label") or "") end
     p.pageRow:SetShown(kind == "page")
     local petEntry = kind == "item" and R.PetSlotFor and R.PetSlotFor(t)
-    local holdable = kind == "item" and (t.a == "SPELL" or t.a == "MACRO" or t.a == "TEXT")
+    local holdable = kind == "item" and (t.a == "SPELL" or t.a == "MACRO" or t.a == "TEXT" or t.a == "ITEM")
         and not (petEntry and petEntry.allowed and not petEntry.token) and true or false
     p.holdRow:SetShown(holdable)
     if holdable then
@@ -3754,7 +3927,7 @@ addon.spells = NewRing({db = "spellRing", off = "spellRingOff", suffix = "Spells
         local names = {}
         local tabs = SpellTabs(true)
         for _, tab in ipairs(tabs) do names[#names + 1] = tab.name end
-        names[#names + 1] = "Mes macros"
+        names[#names + 1] = "Macros, sacs"
         -- Sous-menus : une autre page dans une bulle (si la barre a la place : 8 au plus avec « Macro libre »).
         if #tabs + 3 <= 8 then names[#names + 1] = "Sous-menus" end
         return names
@@ -3765,6 +3938,7 @@ addon.spells = NewRing({db = "spellRing", off = "spellRingOff", suffix = "Spells
         local P = addon.spells
         if cat == #tabs + 1 then
             local list = MacroChoices()
+            for _, c in ipairs(BagChoices()) do list[#list + 1] = c end
             if #tabs + 3 > 8 then
                 for _, c in ipairs(P.PageChoices()) do list[#list + 1] = c end
             end

@@ -88,7 +88,7 @@ Then: Tailscale on, StreamTouch, tap the PC.
 
 ## 6. In World of Warcraft: the Streaming Touch addon
 
-1. Download `StreamingTouch-2.4.0.zip` from **Releases**.
+1. Download `StreamingTouch-2.5.0.zip` from **Releases**.
 2. Unzip it into `World of Warcraft\_forever_\Interface\AddOns`: you should get `AddOns\StreamingTouch`.
 3. Start the game. The addon comes **already set up**: spell arc around the camera stick with the suggested spells of your
    class, round menu, chat above the phone keyboard. Settings: minimap button or `/stouch`.
@@ -117,6 +117,20 @@ The app does not know your spells: it sends clicks and keys, and the addon decid
   Hunter examples: Arcane Shot / Aimed Shot, Serpent Sting / Scorpid Sting, Raptor Strike / Mongoose Bite, Call Pet / Dismiss Pet.
   To choose: `/stouch` > spell arc editor > tap the button > **Maintien** (hold) > **Choisir…** (the addon is in French).
 - A button can also be a **submenu**: it opens a bubble with the buttons of another page (Pet, Traps…).
+
+**Putting a spell, a potion or a quest item on the arc**
+1. Out of combat, open the **spellbook** (or a **bag** for a potion, food or a usable quest item).
+2. Pick up the spell (or the item) with your finger, as you would with the mouse.
+3. Drop it **on a button of the arc**: it takes that place on the page shown (12 buttons per page at most).
+
+You can also choose it in the arc editor (`/stouch`): tap a button, then **Changer l'action**; the items of your bags are in the
+**Macros, sacs** tab. An item shows how many are left and its cooldown, and turns grey when you have none left.
+
+**Tooltips**
+- Finger on a button of the arc: the game's tooltip with the spell's name, **rank**, cost and description (or the item's),
+  and a "Maintien : …" (hold) line.
+- Finger on the button's **small golden badge**: the tooltip of the **second spell**, the one cast on a long press.
+- The tooltip appears where you placed it in Edit Mode (Esc > Edit Mode > HUD Tooltip): keep it away from the camera stick.
 - Spells you have not learned yet stay hidden and appear on their own once learned.
 
 **Arc pages**

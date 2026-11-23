@@ -91,7 +91,7 @@ Ensuite : Tailscale activé, StreamTouch, touche le PC.
 
 ## 6. Dans World of Warcraft : l'addon Streaming Touch
 
-1. Télécharge `StreamingTouch-2.4.0.zip` dans **Releases**.
+1. Télécharge `StreamingTouch-2.5.0.zip` dans **Releases**.
 2. Dézippe-le dans `World of Warcraft\_forever_\Interface\AddOns` : tu dois obtenir `AddOns\StreamingTouch`.
 3. Lance le jeu. L'addon arrive **déjà réglé** : arc de sorts autour du joystick caméra, avec les sorts conseillés de ta classe,
    menu rond, chat placé au-dessus du clavier du téléphone. Réglages : bouton de la mini-carte ou `/stouch`.
@@ -120,6 +120,21 @@ L'appli ne connaît pas tes sorts : elle envoie des clics et des touches, et l'a
   Exemples pour un chasseur : Tir des Arcanes / Visée, Morsure de serpent / Morsure de scorpide, Raptor / Mangouste,
   Appeler le familier / Renvoyer. Pour choisir : `/stouch` > éditeur de l'arc de sorts > touche le bouton > **Maintien** > **Choisir…**.
 - Un bouton peut aussi être un **sous-menu** : il ouvre une bulle avec les boutons d'une autre page (Familier, Pièges…).
+
+**Mettre un sort, une potion ou un objet de quête sur l'arc**
+1. Hors combat, ouvre le **grimoire** (ou un **sac** pour une potion, de la nourriture, un objet de quête à utiliser).
+2. Prends le sort (ou l'objet) avec le doigt, comme on le prend à la souris.
+3. Lâche-le **sur un bouton de l'arc** : il se met à cette place, sur la page affichée (12 boutons par page au plus).
+
+Tu peux aussi le choisir dans l'éditeur de l'arc (`/stouch`) : touche un bouton, puis **Changer l'action** ; les objets de tes sacs
+sont dans l'onglet **Macros, sacs**. Un objet montre combien il en reste et sa recharge, et passe en gris quand tu n'en as plus.
+
+**Infobulles**
+- Doigt posé sur un bouton de l'arc : l'infobulle du jeu, avec le nom, le **rang**, le coût et la description du sort
+  (ou la fiche de l'objet), et la ligne « Maintien : … ».
+- Doigt sur le **petit rond doré** du bouton : la fiche du **second sort**, celui lancé à l'appui long.
+- L'infobulle s'affiche là où tu l'as placée dans le Mode Édition (Échap > Mode Édition > Infobulle de l'ATH) :
+  mets-la loin du joystick caméra.
 - Les sorts pas encore appris restent cachés et apparaissent tout seuls quand tu les apprends.
 
 **Les pages de l'arc**

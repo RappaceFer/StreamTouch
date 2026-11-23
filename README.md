@@ -8,7 +8,7 @@ from home, the Magic Packet to turn the PC on remotely, and the WoW addon.
 
 StreamTouch is an Android game-streaming app built on [Moonlight](https://moonlight-stream.org). Your PC runs the game and
 [Sunshine](https://github.com/LizardByte/Sunshine); your phone shows the picture and becomes the controller. It is designed to go
-with the WoW addon **Streaming Touch 2.4.0**, which adds the spell ring and on-screen helpers inside the game.
+with the WoW addon **Streaming Touch 2.5.0**, which adds the spell ring and on-screen helpers inside the game.
 
 ## Screenshots
 
@@ -36,7 +36,7 @@ with the WoW addon **Streaming Touch 2.4.0**, which adds the spell ring and on-s
 ## What you need
 
 - A Windows PC with World of Warcraft and [Sunshine](https://github.com/LizardByte/Sunshine) (or NVIDIA GameStream).
-- The WoW addon **Streaming Touch 2.4.0** in `Interface/AddOns` (recommended).
+- The WoW addon **Streaming Touch 2.5.0** in `Interface/AddOns` (recommended).
 - An Android 8.0 or newer phone (64-bit ARM).
 
 ## Install
@@ -66,9 +66,17 @@ The addon is in [`addon/StreamingTouch`](addon/StreamingTouch) (MIT license, wri
 It adds the spell arc around the camera joystick (pages that follow combat, a second layer and stances / forms), the round menu,
 the chat placement above the phone keyboard, account profiles and settings export / import.
 
-1. Download `StreamingTouch-2.4.0.zip` from the **Releases** page.
+1. Download `StreamingTouch-2.5.0.zip` from the **Releases** page.
 2. Unzip it into `World of Warcraft/_forever_/Interface/AddOns` (or `_retail_`, `_classic_era_`…), so you get `AddOns/StreamingTouch`.
 3. Start the game. Settings: minimap button or `/stouch`.
+
+**Putting a spell, a potion or a quest item on the arc:** open the spellbook (or a bag), pick up the spell (or the item) with
+your finger and drop it on a button of the arc: it takes that place. Out of combat, 12 buttons per page at most. You can also
+choose it in the arc editor (`/stouch`), tab **Macros, sacs** for the items of your bags. Items show how many are left and
+their cooldown.
+
+**Tooltips:** keep your finger on a button of the arc to see the game's tooltip (name, rank, cost, description); on the small
+golden badge, the spell cast when you hold the button.
 
 ## Build from source
 
@@ -103,7 +111,7 @@ jouer hors de chez toi, le Magic Packet pour allumer le PC à distance, et l'add
 
 **StreamTouch** permet de jouer à World of Warcraft sur un téléphone Android : le PC fait tourner le jeu et
 [Sunshine](https://github.com/LizardByte/Sunshine), le téléphone affiche l'image et devient la manette. L'appli est construite sur
-[Moonlight](https://moonlight-stream.org) et va avec l'addon WoW **Streaming Touch 2.4.0**.
+[Moonlight](https://moonlight-stream.org) et va avec l'addon WoW **Streaming Touch 2.5.0**.
 
 - **Commandes tactiles** : joystick de déplacement, joystick caméra, l'écran comme une souris, et des boutons que l'on place, cache et habille à son goût.
 - **Style or et cuir**, menu rond, guide intégré, mode tactile ou mode manette au choix.
@@ -128,8 +136,11 @@ les réglages de Streaming Touch du personnage sont remplacés et l'interface se
 est gardée et les sorts sont ceux conseillés pour ta classe. Ce sont aussi les réglages de base de l'addon pour un nouveau personnage.
 
 **Addon WoW Streaming Touch :** il est dans [`addon/StreamingTouch`](addon/StreamingTouch) (licence MIT, écrit de zéro, aucun autre
-addon nécessaire). Télécharge `StreamingTouch-2.4.0.zip` dans **Releases** et dézippe-le dans
+addon nécessaire). Télécharge `StreamingTouch-2.5.0.zip` dans **Releases** et dézippe-le dans
 `World of Warcraft/_forever_/Interface/AddOns` pour obtenir `AddOns/StreamingTouch`. Réglages : bouton de la mini-carte ou `/stouch`.
+Pour mettre un sort, une potion ou un objet de quête sur l'arc : ouvre le grimoire (ou un sac), prends-le avec le doigt et
+lâche-le sur un bouton de l'arc (hors combat). Doigt posé sur un bouton : l'infobulle du jeu (nom, rang, description) ; sur le
+petit rond doré : le sort lancé au maintien.
 
 Logiciel libre sous licence **GPL v3**, comme Moonlight. Projet non officiel, sans lien avec Blizzard Entertainment.
 Made in Rappace.
