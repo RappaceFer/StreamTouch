@@ -661,6 +661,7 @@ public final class EcranTactile extends View implements Doigts.Sortie, ActionTac
             case MAJ: return prochainModif == TouchKey.KEY_SHIFT_L;
             case CTRL: return prochainModif == TouchKey.KEY_CTRL_L;
             case ALT: return prochainModif == TouchKey.KEY_ALT_L;
+            case FILTRE: return FiltreVideo.ambiance(jeu) != FiltreVideo.Ambiance.AUCUN;
             default: return false;
         }
     }
@@ -690,10 +691,38 @@ public final class EcranTactile extends View implements Doigts.Sortie, ActionTac
                 banDebut = -BANNIERE_MS;
                 guide = true;
                 break;
+            case FILTRE: changerFiltre(); break;
             case A_PROPOS: post(this::aPropos); break;
             case CLAVIER: basculerClavier(); break;
         }
         invalidate();
+    }
+
+    /**
+     * Next picture mood (Off → Cinema → Vivid → Sharp → Off), applied live: if the filter is not running yet, the
+     * game switches it on mid-stream. When it cannot, the banner says why.
+     */
+    private void changerFiltre() {
+        FiltreVideo.Ambiance a = FiltreVideo.ambiance(jeu).suivante();
+        String aide = jeu.getString(R.string.st_a_filtre_aide);
+        String sr = FiltreVideo.superResolution();
+        if (sr != null) aide = jeu.getString(R.string.st_f_sr, sr);
+        if (!FiltreVideo.choisir(jeu, a)) {
+            int raison = jeu.allumerFiltre();
+            if (raison == R.string.st_f_echec) {
+                aide = jeu.getString(raison) + " : " + FiltreVideo.derniereErreur();
+            } else if (raison != 0) {
+                aide = jeu.getString(raison);
+            }
+        }
+        int nom;
+        switch (a) {
+            case CINEMA: nom = R.string.st_f_cinema; break;
+            case ECLATANT: nom = R.string.st_f_eclatant; break;
+            case NET: nom = R.string.st_f_net; break;
+            default: nom = R.string.st_f_aucun; break;
+        }
+        banniere(dessin(R.drawable.st_ic_palette), jeu.getString(R.string.st_f_titre, jeu.getString(nom)), aide);
     }
 
     private void stylesBoutons() {

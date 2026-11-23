@@ -1,7 +1,7 @@
 # StreamTouch
 
 **Play World of Warcraft on your Android phone, streamed from your PC, with touch controls made for it.**
-Made in Rappace · version 1.0.0 · [Français plus bas](#français)
+Made in Rappace · version 1.1.0 · [Français plus bas](#français)
 
 **New here? Read the [step-by-step guide](GUIDE.md)**: Sunshine on the PC, StreamTouch on the phone, Tailscale to play away
 from home, the Magic Packet to turn the PC on remotely, and the WoW addon.
@@ -29,6 +29,8 @@ with the WoW addon **Streaming Touch 2.5.0**, which adds the spell ring and on-s
 | Buttons | Esc, Map, Bags, Menu, Target (hold: nearest corpse), Use, Jump / Dive, Keyboard (hold: round menu), Professions, Talents, Layer 2. Each one can be moved, hidden and restyled (shape, color, icon). |
 | Look | Medieval gold-and-leather theme: bevelled gold frames, stitched leather, embossed golden RPG icons. |
 | Round menu | Controller / touch mode, buttons, move controls, settings, auto run, dive, Shift / Ctrl / Alt for the next press, guide, about. |
+| Picture filter | Round menu > Filter: Off, Cinema, Vivid, Sharp, applied live on the phone (the PC and the game are not touched). Removes the color bands of video compression in fog and sky. |
+| Super Resolution | Stream at 75 % of the screen ("Native 75% · Super Resolution" resolution) and the phone scales it back up with Snapdragon Game Super Resolution: lighter stream, sharp picture. See the [guide](GUIDE.md#9-a-better-picture-the-filter-and-super-resolution). |
 | Modes | Touch mode or controller mode (only Esc and Keyboard on screen). Choose which one starts in Settings. |
 | Keyboard | Auto: the Swiss PC keyboard of the app when the phone is set to Switzerland, otherwise your phone keyboard in your own language. |
 | Languages | English, and French when the phone is in French. Adding a language = translating one text file (`app/src/main/res/values/st_textes.xml`). |
@@ -41,7 +43,7 @@ with the WoW addon **Streaming Touch 2.5.0**, which adds the spell ring and on-s
 
 ## Install
 
-1. Download `StreamTouch-1.0.0.apk` from the **Releases** page and install it.
+1. Download `StreamTouch-1.1.0.apk` from the **Releases** page and install it.
 2. Open StreamTouch, add your PC and pair it with Sunshine, like any Moonlight client.
 3. Start a stream: the touch controls appear over the game. Open the round menu (Menu button, or hold Keyboard) for the guide and settings.
 
@@ -96,6 +98,8 @@ Please keep your own application ID if you publish a fork.
 - **Streaming engine:** Moonlight for Android by Cameron Gutman and contributors, GPL-3.0. The original Moonlight readme is in `README-Moonlight.md`.
 - **Icons:** [game-icons.net](https://game-icons.net) by Lorc, Delapouite, Caro Asercion and sbed, CC BY 3.0; gold and relief added by the app.
   The full list of icons and authors is in `app/src/main/assets/wowtouch/licenses/GameIcons-CC-BY-3.0.txt`.
+- **Super Resolution:** [Snapdragon Game Super Resolution](https://github.com/SnapdragonStudios/snapdragon-gsr) © Qualcomm Innovation Center, BSD 3-Clause license
+  (full text in `app/src/main/assets/wowtouch/licenses/Snapdragon-GSR-BSD-3.txt`).
 - **App icon:** artwork provided by Rappace.
 
 StreamTouch is free software under the **GNU GPL v3** (see `LICENSE.txt`), like Moonlight it is built on.
@@ -115,12 +119,14 @@ jouer hors de chez toi, le Magic Packet pour allumer le PC à distance, et l'add
 
 - **Commandes tactiles** : joystick de déplacement, joystick caméra, l'écran comme une souris, et des boutons que l'on place, cache et habille à son goût.
 - **Style or et cuir**, menu rond, guide intégré, mode tactile ou mode manette au choix.
+- **Filtre d'image** (menu rond > Filtre) : Aucun, Cinéma, Éclatant, Net, calculé par le téléphone, sans toucher au PC ni au jeu.
+- **Super Résolution** : stream à 75 % de l'écran, remis en grand et net par le téléphone (voir le [guide](GUIDE-FR.md#9-une-image-plus-belle--le-filtre-et-la-super-résolution)).
 - **Clavier** : le clavier suisse de l'appli en Suisse, sinon le clavier du téléphone dans ta langue.
 - **Langues** : français si le téléphone est en français, anglais sinon.
 
 Captures d'écran : voir plus haut (dossier `captures/`).
 
-**Installer :** télécharge `StreamTouch-1.0.0.apk` dans **Releases**, installe-le, ajoute ton PC et associe-le à Sunshine,
+**Installer :** télécharge `StreamTouch-1.1.0.apk` dans **Releases**, installe-le, ajoute ton PC et associe-le à Sunshine,
 puis lance un stream. Le menu rond (bouton Menu, ou maintenir Clavier) donne le guide et les réglages.
 
 **Disposition d'interface WoW (facultatif) :** le fichier [`reglages-wow/disposition-mode-edition.txt`](reglages-wow/disposition-mode-edition.txt)

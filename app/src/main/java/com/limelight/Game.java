@@ -14,6 +14,7 @@ import com.limelight.binding.input.evdev.EvdevListener;
 import com.limelight.binding.input.touch.TouchContext;
 import com.limelight.binding.input.virtual_controller.VirtualController;
 import com.limelight.wowtouch.EcranTactile;
+import com.limelight.wowtouch.FiltreVideo;
 import com.limelight.wowtouch.MoonlightTouchBridge;
 import com.limelight.wowtouch.TouchConfig;
 import com.limelight.binding.video.CrashListener;
@@ -119,6 +120,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private KeyboardTranslator keyboardTranslator;
     private VirtualController virtualController;
     private EcranTactile wowTouchView;
+    private FiltreVideo filtreVideo;
     private MoonlightTouchBridge wowTouchBridge;
 
     private android.speech.SpeechRecognizer wowVoice;
@@ -842,6 +844,13 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 // Ignore insets if this is an exact match for the display resolution
                 if ((width == candidate.getPhysicalWidth() && height == candidate.getPhysicalHeight()) ||
                         (height == candidate.getPhysicalWidth() && width == candidate.getPhysicalHeight())) {
+                    return true;
+                }
+                // StreamTouch: same for the full-screen resolution at 75 % (Super Resolution entry).
+                int[] reduced = PreferenceConfiguration.reducedResolution(
+                        Math.max(candidate.getPhysicalWidth(), candidate.getPhysicalHeight()),
+                        Math.min(candidate.getPhysicalWidth(), candidate.getPhysicalHeight()));
+                if ((width == reduced[0] && height == reduced[1]) || (height == reduced[0] && width == reduced[1])) {
                     return true;
                 }
             }
@@ -2594,9 +2603,42 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             UiHelper.notifyStreamConnecting(Game.this);
 
             decoderRenderer.setRenderTarget(holder);
+            // StreamTouch: picture filter (moods) on the phone's GPU, unless HDR. Null = direct to the screen.
+            // When the screen surface is bigger than the stream, it also upscales (Snapdragon Super Resolution).
+            if (!prefConfig.enableHdr) {
+                boolean agrandir = width > prefConfig.width * 1.02f || height > prefConfig.height * 1.02f;
+                filtreVideo = FiltreVideo.demarrer(this, holder.getSurface(), prefConfig.width, prefConfig.height,
+                        agrandir);
+            }
+            decoderRenderer.setFilterSurface(filtreVideo != null ? filtreVideo.entree() : null);
             conn.start(new AndroidAudioRenderer(Game.this, prefConfig.enableAudioFx),
                     decoderRenderer, Game.this);
         }
+    }
+
+    /**
+     * StreamTouch: switches the picture filter on in the middle of a stream (the decoder moves over to it, no
+     * restart). Returns 0 when the filter runs, otherwise the text that says why it cannot.
+     */
+    public int allumerFiltre() {
+        if (filtreVideo != null) return 0;
+        if (prefConfig.enableHdr) return R.string.st_f_hdr;
+        android.view.Surface ecran = streamView.getHolder().getSurface();
+        if (!connected || decoderRenderer == null || ecran == null || !ecran.isValid()) return R.string.st_f_prochain;
+        FiltreVideo f = FiltreVideo.sansEcran(this, prefConfig.width, prefConfig.height);
+        if (f == null) return R.string.st_f_echec;
+        if (!decoderRenderer.moveOutput(f.entree())) {
+            f.arreter();
+            return R.string.st_f_prochain;
+        }
+        if (!f.brancher(ecran)) {
+            // The filter could not take the screen: give the screen back to the decoder.
+            decoderRenderer.moveOutput(null);
+            f.arreter();
+            return R.string.st_f_echec;
+        }
+        filtreVideo = f;
+        return 0;
     }
 
     @Override
@@ -2653,6 +2695,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             if (connected) {
                 stopConnection();
             }
+        }
+
+        // StreamTouch: the filter must let go of the screen before this method returns.
+        if (filtreVideo != null) {
+            filtreVideo.arreter();
+            filtreVideo = null;
         }
     }
 

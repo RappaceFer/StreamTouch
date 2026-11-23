@@ -28,6 +28,18 @@
     <string name="st_a_modif_aide">Pour le prochain appui</string>
     <string name="st_a_guide">Guide</string>
     <string name="st_a_guide_aide">Ce que fait chaque commande</string>
+    <string name="st_a_filtre">Filtre</string>
+    <string name="st_a_filtre_aide">Couleurs de l\'image, sur le téléphone seulement</string>
+    <string name="st_f_titre" formatted="true">Filtre : %1$s</string>
+    <string name="st_f_aucun">Aucun</string>
+    <string name="st_f_cinema">Cinéma</string>
+    <string name="st_f_eclatant">Éclatant</string>
+    <string name="st_f_net">Net</string>
+    <string name="st_f_prochain">Au prochain lancement du stream</string>
+    <string name="st_f_hdr">Coupé en HDR : désactive le HDR dans les réglages</string>
+    <string name="st_f_echec">Le filtre ne démarre pas</string>
+    <string name="st_f_sr" formatted="true">Super Résolution : %1$s</string>
+    <string name="st_resolution_sr" formatted="false">75 % · Super Résolution</string>
     <string name="st_a_propos">À propos</string>
     <string name="st_a_clavier_aide">Pour écrire dans le jeu</string>
     <string name="st_m_titre">Commandes</string>
@@ -80,7 +92,7 @@
     <string name="st_annuler">Annuler</string>
     <string name="st_fermer">Fermer</string>
     <string name="st_ap_titre">StreamTouch — Made in Rappace</string>
-    <string name="st_ap_texte">Commandes tactiles, joysticks, menu rond et clavier : écrits pour Rappace (Streaming Touch).\n\nStreaming : Moonlight, logiciel libre sous licence GPL v3 (moonlight-stream.org).\nIcônes : game-icons.net (Lorc, Delapouite et d\'autres), licence CC BY 3.0.\n\nVa de pair avec l\'addon WoW « Streaming Touch ».</string>
+    <string name="st_ap_texte">Commandes tactiles, joysticks, menu rond et clavier : écrits pour Rappace (Streaming Touch).\n\nStreaming : Moonlight, logiciel libre sous licence GPL v3 (moonlight-stream.org).\nIcônes : game-icons.net (Lorc, Delapouite et d\'autres), licence CC BY 3.0.\nSuper Résolution : Snapdragon Game Super Resolution, © Qualcomm Innovation Center, licence BSD 3 clauses.\n\nVa de pair avec l\'addon WoW « Streaming Touch ».</string>
     <string name="st_ap_version" formatted="true">Version %1$s</string>
     <string name="st_b_titre">Personnaliser les boutons</string>
     <string name="st_b_aide">Touche un bouton, puis choisis sa forme, sa couleur et son icône. Ça s\'applique tout de suite à l\'écran.</string>

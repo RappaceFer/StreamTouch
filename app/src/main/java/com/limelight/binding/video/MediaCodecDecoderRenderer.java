@@ -35,6 +35,7 @@ import android.os.Process;
 import android.os.SystemClock;
 import android.util.Range;
 import android.view.Choreographer;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 
 public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements Choreographer.FrameCallback {
@@ -271,6 +272,30 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
 
     public void setRenderTarget(SurfaceHolder renderTarget) {
         this.renderTarget = renderTarget;
+    }
+
+    // StreamTouch: optional surface in front of the screen (the picture filter). Null = render to the screen.
+    private volatile Surface filterSurface;
+
+    public void setFilterSurface(Surface filterSurface) {
+        this.filterSurface = filterSurface;
+    }
+
+    // StreamTouch: moves the running decoder's output (filter switched on mid-stream, or the screen given back).
+    // filter = the filter's input, or null for the screen. False if the decoder could not move.
+    public boolean moveOutput(Surface filter) {
+        MediaCodec decoder = videoDecoder;
+        if (decoder == null || stopping || renderTarget == null) {
+            return false;
+        }
+        try {
+            decoder.setOutputSurface(filter != null ? filter : renderTarget.getSurface());
+            filterSurface = filter;
+            return true;
+        } catch (RuntimeException e) {
+            LimeLog.warning("StreamTouch: decoder output switch refused: " + e);
+            return false;
+        }
     }
 
     public MediaCodecDecoderRenderer(Activity activity, PreferenceConfiguration prefs,
@@ -516,7 +541,7 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
 
         LimeLog.info("Configuring with format: "+format);
 
-        videoDecoder.configure(format, renderTarget.getSurface(), null, 0);
+        videoDecoder.configure(format, filterSurface != null ? filterSurface : renderTarget.getSurface(), null, 0);
 
         configuredFormat = format;
 

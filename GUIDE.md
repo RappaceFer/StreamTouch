@@ -32,7 +32,7 @@ The "Desktop" app is enough: start WoW from the desktop while streaming.
 
 ## 2. On the phone: StreamTouch
 
-1. Download `StreamTouch-1.0.0.apk` from **Releases**: https://github.com/RappaceFer/StreamTouch/releases
+1. Download `StreamTouch-1.1.0.apk` from **Releases**: https://github.com/RappaceFer/StreamTouch/releases
 2. Install it (Android asks you to allow installs from your browser or file manager).
 3. The app comes **already set up** with Rappace's settings: button layout, sizes, opacity, touch mode at start.
    Change anything later in the round menu (Menu button, or hold Keyboard) > Settings.
@@ -146,6 +146,27 @@ You can also choose it in the arc editor (`/stouch`): tap a button, then **Chang
 - **Left stick left or right**: your character side-steps instead of turning (A and D keys). Turn the camera with the right
   stick. You can switch this off in `/stouch` > Commands.
 - **Keyboard**: while you type, the chat input line moves above the phone keyboard.
+
+## 9. A better picture: the Filter and Super Resolution
+
+Everything happens **on the phone**: neither the PC nor the game is changed.
+
+**The Filter (moods)**: round menu > **Filter**. Each tap switches to the next mood, right away:
+- **Off**: the original picture.
+- **Cinema**: warmer and more contrasted, slightly darker corners.
+- **Vivid**: bright, lively colors.
+- **Sharp**: very sharp (details stand out), bright and colorful.
+
+Cinema, Vivid and Sharp also remove the **color bands** that video compression leaves in fog and sky.
+
+**Super Resolution**: your PC sends a smaller picture (lighter, ideal away from home with Tailscale), and the phone scales it
+back up with Snapdragon Super Resolution, without blur.
+1. In StreamTouch, on the home screen: **gear** > **Video resolution**.
+2. Pick **"Native Full-Screen 75% · Super Resolution"** (or "Native 75%" if you want the picture to avoid the phone's
+   camera). The warning message is normal: press OK.
+3. Start the game. Round menu > **Filter**: the banner shows "Super Resolution: …" while it works.
+
+Super Resolution also works with the "Off" mood. It is not available in HDR.
 
 ## Common problems
 

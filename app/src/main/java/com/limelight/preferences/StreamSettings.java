@@ -187,6 +187,27 @@ public class StreamSettings extends Activity {
                 addNativeResolutionEntry(nativeHeight, nativeWidth, insetsRemoved, true);
             }
             addNativeResolutionEntry(nativeWidth, nativeHeight, insetsRemoved, false);
+            addReducedResolutionEntry(nativeWidth, nativeHeight, insetsRemoved);
+        }
+
+        // StreamTouch: the screen's own shape at 75 %, lighter to stream; the phone scales it back up with the
+        // Snapdragon Super Resolution filter, without black bars.
+        private void addReducedResolutionEntry(int nativeWidth, int nativeHeight, boolean insetsRemoved) {
+            ListPreference pref = (ListPreference) findPreference(PreferenceConfiguration.RESOLUTION_PREF_STRING);
+            int[] size = PreferenceConfiguration.reducedResolution(nativeWidth, nativeHeight);
+            String value = size[0] + "x" + size[1];
+            for (CharSequence existing : pref.getEntryValues()) {
+                if (value.equals(existing.toString())) {
+                    return;
+                }
+            }
+            String name = getResources().getString(insetsRemoved ?
+                    R.string.resolution_prefix_native_fullscreen : R.string.resolution_prefix_native) +
+                    " " + getResources().getString(R.string.st_resolution_sr) + " (" + value + ")";
+            if (pref.getEntryValues().length < nativeResolutionStartIndex) {
+                nativeResolutionStartIndex = pref.getEntryValues().length;
+            }
+            appendPreferenceEntry(pref, name, value);
         }
 
         private void addNativeFrameRateEntry(float framerate) {

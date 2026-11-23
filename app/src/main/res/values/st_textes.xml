@@ -28,6 +28,18 @@
     <string name="st_a_modif_aide">For the next press</string>
     <string name="st_a_guide">Guide</string>
     <string name="st_a_guide_aide">What each control does</string>
+    <string name="st_a_filtre">Filter</string>
+    <string name="st_a_filtre_aide">Picture colors, on the phone only</string>
+    <string name="st_f_titre" formatted="true">Filter: %1$s</string>
+    <string name="st_f_aucun">Off</string>
+    <string name="st_f_cinema">Cinema</string>
+    <string name="st_f_eclatant">Vivid</string>
+    <string name="st_f_net">Sharp</string>
+    <string name="st_f_prochain">Applies on the next stream</string>
+    <string name="st_f_hdr">Off in HDR: turn HDR off in the settings</string>
+    <string name="st_f_echec">The filter cannot start</string>
+    <string name="st_f_sr" formatted="true">Super Resolution: %1$s</string>
+    <string name="st_resolution_sr" formatted="false">75% · Super Resolution</string>
     <string name="st_a_propos">About</string>
     <string name="st_a_clavier_aide">To type in the game</string>
     <string name="st_m_titre">Controls</string>
@@ -80,7 +92,7 @@
     <string name="st_annuler">Cancel</string>
     <string name="st_fermer">Close</string>
     <string name="st_ap_titre">StreamTouch — Made in Rappace</string>
-    <string name="st_ap_texte">Touch controls, sticks, round menu and keyboard: written for Rappace (Streaming Touch).\n\nStreaming: Moonlight, free software under the GPL v3 license (moonlight-stream.org).\nIcons: game-icons.net (Lorc, Delapouite and others), CC BY 3.0 license.\n\nGoes with the WoW addon “Streaming Touch”.</string>
+    <string name="st_ap_texte">Touch controls, sticks, round menu and keyboard: written for Rappace (Streaming Touch).\n\nStreaming: Moonlight, free software under the GPL v3 license (moonlight-stream.org).\nIcons: game-icons.net (Lorc, Delapouite and others), CC BY 3.0 license.\nSuper Resolution: Snapdragon Game Super Resolution, © Qualcomm Innovation Center, BSD 3-clause license.\n\nGoes with the WoW addon “Streaming Touch”.</string>
     <string name="st_ap_version" formatted="true">Version %1$s</string>
     <string name="st_b_titre">Customize buttons</string>
     <string name="st_b_aide">Tap a button, then choose its shape, color and icon. It applies on screen right away.</string>

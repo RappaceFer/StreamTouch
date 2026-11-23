@@ -13,6 +13,7 @@ enum ActionTactile {
     MAJ(R.string.st_maj, R.drawable.st_ic_arrow_fat_up, R.string.st_a_modif_aide),
     CTRL(0, R.drawable.st_ic_control, R.string.st_a_modif_aide),
     ALT(0, R.drawable.st_ic_option, R.string.st_a_modif_aide),
+    FILTRE(R.string.st_a_filtre, R.drawable.st_ic_palette, R.string.st_a_filtre_aide),
     GUIDE(R.string.st_a_guide, R.drawable.st_ic_hand_pointing, R.string.st_a_guide_aide),
     A_PROPOS(R.string.st_a_propos, R.drawable.st_ic_info, 0),
     CLAVIER(R.string.st_clavier, R.drawable.st_ic_keyboard, R.string.st_a_clavier_aide);

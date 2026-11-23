@@ -198,7 +198,7 @@
     <string name="pcview_menu_header_unknown">Actualisation</string>
     <string name="pcview_menu_header_offline">Hors ligne</string>
     <string name="pcview_menu_header_online">En ligne</string>
-    <string name="resolution_prefix_native">Native</string>
+    <string name="resolution_prefix_native">Natif</string>
     <string name="suffix_seekbar_bitrate_mbps">Mbps</string>
     <string name="text_native_res_dialog">La résolution native et/ou le FPS peuvent ne pas être pris en charge par le serveur de streaming. Vous devrez probablement configurer manuellement un mode d\'affichage personnalisé correspondant pour le PC hôte.
 \n

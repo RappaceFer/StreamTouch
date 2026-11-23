@@ -32,7 +32,7 @@ Le programme « Desktop » (bureau) suffit : tu lances WoW depuis le bureau pend
 
 ## 2. Sur le téléphone : StreamTouch
 
-1. Télécharge `StreamTouch-1.0.0.apk` dans **Releases** : https://github.com/RappaceFer/StreamTouch/releases
+1. Télécharge `StreamTouch-1.1.0.apk` dans **Releases** : https://github.com/RappaceFer/StreamTouch/releases
 2. Installe-le (Android demande d'autoriser l'installation depuis le navigateur ou le gestionnaire de fichiers).
 3. L'appli arrive **déjà réglée** avec les réglages de Rappace : place des boutons, tailles, transparence, mode tactile au démarrage.
    Tout se change ensuite dans le menu rond (bouton Menu, ou maintenir Clavier) > Réglages.
@@ -150,6 +150,27 @@ sont dans l'onglet **Macros, sacs**. Un objet montre combien il en reste et sa r
 - **Joystick gauche vers la gauche ou la droite** : ton personnage fait un pas de côté au lieu de tourner (touches A et D).
   La caméra se tourne avec le joystick droit. Tu peux couper ce réglage dans `/stouch` > Commandes.
 - **Clavier** : quand tu écris, la ligne du chat monte au-dessus du clavier du téléphone.
+
+## 9. Une image plus belle : le Filtre et la Super Résolution
+
+Tout se passe **sur le téléphone** : ni le PC ni le jeu ne sont modifiés.
+
+**Le Filtre (ambiances)** : menu rond > **Filtre**. Chaque appui passe à l'ambiance suivante, tout de suite :
+- **Aucun** : l'image d'origine.
+- **Cinéma** : plus chaud et plus contrasté, coins légèrement assombris.
+- **Éclatant** : couleurs vives et lumineuses.
+- **Net** : très net (les détails ressortent), lumineux et coloré.
+
+Cinéma, Éclatant et Net enlèvent aussi les **bandes de couleur** que la compression laisse dans le brouillard et le ciel.
+
+**La Super Résolution** : ton PC envoie une image plus petite (plus légère, idéale dehors avec Tailscale), et le téléphone la
+remet en grand avec la Super Résolution Snapdragon, sans flou.
+1. Dans StreamTouch, sur l'écran d'accueil : **roue dentée** > **Résolution vidéo**.
+2. Choisis **« Plein-écran natif 75 % · Super Résolution »** (ou « Natif 75 % » si tu veux que l'image évite la caméra du
+   téléphone). Le message d'avertissement est normal : appuie sur OK.
+3. Lance le jeu. Menu rond > **Filtre** : le bandeau affiche « Super Résolution : … » quand elle travaille.
+
+La Super Résolution marche aussi avec l'ambiance « Aucun ». Elle n'est pas disponible en HDR.
 
 ## Problèmes fréquents
 

@@ -31,6 +31,7 @@ Qui a dessiné quoi :
   mailed-fist : Lorc (https://game-icons.net/1x1/lorc/mailed-fist.html)
   meeple-group : Delapouite (https://game-icons.net/1x1/delapouite/meeple-group.html)
   open-book : Lorc (https://game-icons.net/1x1/lorc/open-book.html)
+  palette : Delapouite (https://game-icons.net/1x1/delapouite/palette.html)
   paw-print : Lorc (https://game-icons.net/1x1/lorc/paw-print.html)
   pointing : Lorc (https://game-icons.net/1x1/lorc/pointing.html)
   pool-dive : Delapouite (https://game-icons.net/1x1/delapouite/pool-dive.html)

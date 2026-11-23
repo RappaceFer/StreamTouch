@@ -156,6 +156,12 @@ public class PreferenceConfiguration {
     public boolean gamepadTouchpadAsMouse;
     public boolean gamepadMotionSensorsFallbackToDevice;
 
+    // StreamTouch: a native resolution at 75 % (same shape as the screen) for the Super Resolution filter.
+    // Width rounded to a multiple of 8 and height to an even number, which video encoders handle well.
+    public static int[] reducedResolution(int width, int height) {
+        return new int[]{Math.round(width * 0.75f / 8f) * 8, Math.round(height * 0.75f / 2f) * 2};
+    }
+
     public static boolean isNativeResolution(int width, int height) {
         // It's not a native resolution if it matches an existing resolution option
         if (width == 640 && height == 360) {
