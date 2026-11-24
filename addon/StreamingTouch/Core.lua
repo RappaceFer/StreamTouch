@@ -39,7 +39,7 @@ do
         if type(StreamingTouchAccount) ~= "table" then StreamingTouchAccount = {} end
         local compte, db = StreamingTouchAccount, DB()
         compte.general = {}
-        for k, v in pairs(db) do if k ~= "spellRing" then compte.general[k] = Copie(v) end end
+        for k, v in pairs(db) do if k ~= "spellRing" and k ~= "diag" then compte.general[k] = Copie(v) end end
         compte.classes = compte.classes or {}
         if type(db.spellRing) == "table" then
             compte.classes[Classe()] = Copie(db.spellRing)
@@ -63,7 +63,10 @@ do
     end
     -- Partage : tous les réglages de ce personnage en texte (Partage.lua), et l'inverse.
     function ST.Exporter()
-        return ST.Encoder({v = 1, nom = UnitName("player"), classe = Classe(), db = DB()})
+        -- Le carnet de bord (diag) reste sur ce PC : il ne part ni dans le texte ni dans le modèle.
+        local db = {}
+        for k, v in pairs(DB()) do if k ~= "diag" then db[k] = v end end
+        return ST.Encoder({v = 1, nom = UnitName("player"), classe = Classe(), db = db})
     end
     -- Remplace les réglages de ce personnage. Texte d'une autre classe : on garde la disposition de l'arc,
     -- ses sorts repartent de ceux conseillés pour la classe (comme le profil du compte).
