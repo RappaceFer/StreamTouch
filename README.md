@@ -119,6 +119,8 @@ Please keep your own application ID if you publish a fork.
 - **App icon:** artwork provided by Rappace.
 
 StreamTouch is free software under the **GNU GPL v3** (see `LICENSE.txt`), like Moonlight it is built on.
+The touch layer (sticks, buttons, keyboards, round menu, settings: the files listed in [`LICENSE-MIT-couche-tactile.txt`](LICENSE-MIT-couche-tactile.txt))
+is also available under the **MIT License**, so other projects can reuse it.
 It is an unofficial project, not affiliated with Moonlight, game-icons.net or Blizzard Entertainment.
 World of Warcraft is a trademark of Blizzard Entertainment.
 
@@ -167,5 +169,6 @@ invocations avec minuteur, liseré rouge en combat), une **mini-carte** à thèm
 un sort offensif sans cible ennemie prend l'ennemi le plus proche devant toi et part, en un seul appui. Doigt posé sur un bouton : l'infobulle du jeu (nom, rang, description) ; sur le
 petit rond doré : le sort lancé au maintien.
 
-Logiciel libre sous licence **GPL v3**, comme Moonlight. Projet non officiel, sans lien avec Blizzard Entertainment.
+Logiciel libre sous licence **GPL v3**, comme Moonlight. La couche tactile (joysticks, boutons, claviers, menu rond, réglages : les fichiers listés dans
+[`LICENSE-MIT-couche-tactile.txt`](LICENSE-MIT-couche-tactile.txt)) est aussi disponible sous **licence MIT**, pour que d'autres projets puissent la reprendre. Projet non officiel, sans lien avec Blizzard Entertainment.
 Made in Rappace.
