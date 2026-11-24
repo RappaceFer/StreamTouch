@@ -8,18 +8,30 @@ from home, the Magic Packet to turn the PC on remotely, and the WoW addon.
 
 StreamTouch is an Android game-streaming app built on [Moonlight](https://moonlight-stream.org). Your PC runs the game and
 [Sunshine](https://github.com/LizardByte/Sunshine); your phone shows the picture and becomes the controller. It is designed to go
-with the WoW addon **Streaming Touch 2.5.0**, which adds the spell ring and on-screen helpers inside the game.
+with the WoW addon **Streaming Touch 2.7.0**, which adds the spell ring and on-screen helpers inside the game.
 
 ## Screenshots
 
 | | |
 | --- | --- |
-| ![In game](captures/1-en-jeu.jpg) | ![Auto run](captures/2-course-auto.jpg) |
-| In game: move stick, camera stick, gold-and-leather buttons | Auto run card |
-| ![Round menu](captures/3-menu-rond.jpg) | ![Swiss keyboard](captures/4-clavier-suisse.jpg) |
-| Round menu | Swiss PC keyboard with voice typing |
-| ![Settings](captures/5-reglages.jpg) | ![Customize buttons](captures/6-boutons.jpg) |
-| Settings | Customize buttons (shape, color, icon) |
+| ![Combat: unit frames, target debuffs with their time left](captures/01-combat-cible.jpg) | ![Combat: Mend Pet, the hawk under the pet frame with its timer](captures/02-combat-familier.jpg) |
+| Combat: unit frames, target debuffs with their time left | Combat: Mend Pet, the hawk under the pet frame with its timer |
+| ![Spell arc: a group opened (Traps)](captures/03-arc-groupe-pieges.jpg) | ![Small bar, opened from its handle](captures/04-petite-barre.jpg) |
+| Spell arc: a group opened (Traps) | Small bar, opened from its handle |
+| ![Sub-bar as an arc, the rest faded](captures/05-sous-barre-en-arc.jpg) | ![Round menu (game windows)](captures/06-menu-rond.jpg) |
+| Sub-bar as an arc, the rest faded | Round menu (game windows) |
+| ![Swiss PC keyboard with voice typing](captures/07-clavier-suisse.jpg) | ![The app's command wheel](captures/08-commandes-appli.jpg) |
+| Swiss PC keyboard with voice typing | The app's command wheel |
+| ![Settings: unit frames](captures/09-reglages-cadres.jpg) | ![Settings: minimap](captures/10-reglages-mini-carte.jpg) |
+| Settings: unit frames | Settings: minimap |
+| ![Settings: small bar](captures/11-reglages-barre.jpg) | ![Settings: spell arc](captures/12-reglages-sorts.jpg) |
+| Settings: small bar | Settings: spell arc |
+| ![Settings: commands, auto target](captures/13-reglages-commandes.jpg) | ![Settings: round menu](captures/14-reglages-menu-rond.jpg) |
+| Settings: commands, auto target | Settings: round menu |
+| ![Settings: chat](captures/15-reglages-chat.jpg) | ![App: on-screen buttons](captures/16-appli-boutons.jpg) |
+| Settings: chat | App: on-screen buttons |
+| ![App: start mode and keyboard](captures/17-appli-clavier.jpg) | ![App: sticks and buttons size](captures/18-appli-joysticks.jpg) |
+| App: start mode and keyboard | App: sticks and buttons size |
 
 ## Features
 
@@ -38,7 +50,7 @@ with the WoW addon **Streaming Touch 2.5.0**, which adds the spell ring and on-s
 ## What you need
 
 - A Windows PC with World of Warcraft and [Sunshine](https://github.com/LizardByte/Sunshine) (or NVIDIA GameStream).
-- The WoW addon **Streaming Touch 2.5.0** in `Interface/AddOns` (recommended).
+- The WoW addon **Streaming Touch 2.7.0** in `Interface/AddOns` (recommended).
 - An Android 8.0 or newer phone (64-bit ARM).
 
 ## Install
@@ -67,8 +79,12 @@ spells are the ones suggested for your class. These are also the addon's default
 The addon is in [`addon/StreamingTouch`](addon/StreamingTouch) (MIT license, written from scratch, no other addon needed).
 It adds the spell arc around the camera joystick (pages that follow combat, a second layer and stances / forms), the round menu,
 the chat placement above the phone keyboard, account profiles and settings export / import.
+Since 2.6 / 2.7 it also has a **small bar** with sub-bars (line, arc or fan), its own **unit frames** (player, pet, target,
+target of target, party: three styles, buffs and debuffs in combat, timed summons, red border in combat), a themed
+**minimap** (round, square or rounded) and **auto target**: an offensive spell with no enemy targeted picks the nearest
+enemy in front of you and fires, in one press.
 
-1. Download `StreamingTouch-2.5.0.zip` from the **Releases** page.
+1. Download `StreamingTouch-2.7.0.zip` from the **Releases** page.
 2. Unzip it into `World of Warcraft/_forever_/Interface/AddOns` (or `_retail_`, `_classic_era_`…), so you get `AddOns/StreamingTouch`.
 3. Start the game. Settings: minimap button or `/stouch`.
 
@@ -115,7 +131,7 @@ jouer hors de chez toi, le Magic Packet pour allumer le PC à distance, et l'add
 
 **StreamTouch** permet de jouer à World of Warcraft sur un téléphone Android : le PC fait tourner le jeu et
 [Sunshine](https://github.com/LizardByte/Sunshine), le téléphone affiche l'image et devient la manette. L'appli est construite sur
-[Moonlight](https://moonlight-stream.org) et va avec l'addon WoW **Streaming Touch 2.5.0**.
+[Moonlight](https://moonlight-stream.org) et va avec l'addon WoW **Streaming Touch 2.7.0**.
 
 - **Commandes tactiles** : joystick de déplacement, joystick caméra, l'écran comme une souris, et des boutons que l'on place, cache et habille à son goût.
 - **Style or et cuir**, menu rond, guide intégré, mode tactile ou mode manette au choix.
@@ -142,10 +158,13 @@ les réglages de Streaming Touch du personnage sont remplacés et l'interface se
 est gardée et les sorts sont ceux conseillés pour ta classe. Ce sont aussi les réglages de base de l'addon pour un nouveau personnage.
 
 **Addon WoW Streaming Touch :** il est dans [`addon/StreamingTouch`](addon/StreamingTouch) (licence MIT, écrit de zéro, aucun autre
-addon nécessaire). Télécharge `StreamingTouch-2.5.0.zip` dans **Releases** et dézippe-le dans
+addon nécessaire). Télécharge `StreamingTouch-2.7.0.zip` dans **Releases** et dézippe-le dans
 `World of Warcraft/_forever_/Interface/AddOns` pour obtenir `AddOns/StreamingTouch`. Réglages : bouton de la mini-carte ou `/stouch`.
 Pour mettre un sort, une potion ou un objet de quête sur l'arc : ouvre le grimoire (ou un sac), prends-le avec le doigt et
-lâche-le sur un bouton de l'arc (hors combat). Doigt posé sur un bouton : l'infobulle du jeu (nom, rang, description) ; sur le
+lâche-le sur un bouton de l'arc (hors combat). Depuis la 2.6 / 2.7 : une **petite barre** avec sous-barres (ligne, arc
+ou éventail), des **cadres des personnages** (joueur, familier, cible, cible de la cible, groupe : trois styles, effets en combat,
+invocations avec minuteur, liseré rouge en combat), une **mini-carte** à thèmes (ronde, carrée ou arrondie) et le **ciblage auto** :
+un sort offensif sans cible ennemie prend l'ennemi le plus proche devant toi et part, en un seul appui. Doigt posé sur un bouton : l'infobulle du jeu (nom, rang, description) ; sur le
 petit rond doré : le sort lancé au maintien.
 
 Logiciel libre sous licence **GPL v3**, comme Moonlight. Projet non officiel, sans lien avec Blizzard Entertainment.

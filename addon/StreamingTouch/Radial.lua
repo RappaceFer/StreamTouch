@@ -33,6 +33,24 @@ local function SpellName(id)
     if GetSpellInfo then return (GetSpellInfo(id)) end
 end
 
+-- Ciblage auto : un sort offensif lancé sans cible ennemie vivante prend d'abord l'ennemi le plus
+-- proche devant soi, puis part (comme la macro « /targetenemy » du jeu : un seul appui, permis).
+local function Harmful(name, id)
+    local ok, res = pcall(function()
+        if C_Spell and C_Spell.IsSpellHarmful then return C_Spell.IsSpellHarmful(id or name) end
+        if IsHarmfulSpell then return IsHarmfulSpell(name) end
+    end)
+    return ok and res and true or false
+end
+addon.Harmful = Harmful
+function addon.AutoCast(btn, name, id)
+    if type(name) ~= "string" or name == "" then return end
+    if (StreamingTouchDB or {}).autoTargetOff or not Harmful(name, id) then return end
+    btn:SetAttribute("type", "macro")
+    btn:SetAttribute("macro", nil)
+    btn:SetAttribute("macrotext", "/targetenemy [noharm][dead]\n/cast " .. name)
+end
+
 R.COLORS = {
     {"or", "Or", 1, .82, .32}, {"bleu", "Bleu", .32, .62, 1}, {"rouge", "Rouge", 1, .32, .32},
     {"vert", "Vert", .38, .9, .45}, {"violet", "Violet", .72, .47, 1}, {"orange", "Orange", 1, .56, .16},
@@ -905,11 +923,12 @@ function R.Visual(b)
     b.icon = b:CreateTexture(nil, "ARTWORK")
     b.icon:SetPoint("CENTER")
     b.icon:SetTexCoord(.07, .93, .07, .93)
-    -- Allumé (aspect en cours, ordre du familier, sort automatique, tir automatique) : anneau doré vif
-    -- et icône éclaircie, comme les boutons « cochés » des barres du jeu.
-    b.lit = b:CreateTexture(nil, "BACKGROUND", nil, 2)
-    b.lit:SetTexture(WHITE)
-    b.lit:SetVertexColor(1, .88, .3, 1)
+    -- Allumé (aspect en cours, ordre du familier, sort automatique, tir automatique) : la surbrillance
+    -- des boutons « cochés » des barres du jeu, posée sur l'icône (plus d'anneau jaune autour).
+    b.lit = b:CreateTexture(nil, "OVERLAY", nil, 2)
+    b.lit:SetTexture("Interface\\Buttons\\CheckButtonHilight")
+    if b.lit.SetBlendMode then b.lit:SetBlendMode("ADD") end
+    b.lit:SetVertexColor(1, 1, 1, 1)
     b.lit:SetPoint("CENTER")
     b.lit:Hide()
     b.shine = b:CreateTexture(nil, "OVERLAY", nil, 1)
@@ -943,7 +962,7 @@ function R.Paint(b, size, icon, color, shape, label)
     b.icon:SetSize(size - edge * 2, size - edge * 2)
     b.glow:SetSize(size + 12, size + 12)
     if b.lit then
-        b.lit:SetSize(size + 8, size + 8)
+        b.lit:SetSize(size - edge * 2, size - edge * 2)
         b.shine:SetSize(size - edge * 2, size - edge * 2)
     end
     if c[3] then
@@ -1274,15 +1293,20 @@ function R.Build()
     ring.title:SetWidth(90)
     ring.title:SetWordWrap(false)
 
-    local close = CreateFrame("Button", nil, ring, "SecureHandlerClickTemplate")
+    local close = CreateFrame("Button", "StreamingTouchRingClose" .. R.opts.suffix, ring, "SecureHandlerClickTemplate")
     close:SetSize(30, 30)
     close:SetPoint("CENTER", 0, -4)
     close:RegisterForClicks("AnyUp")
     close:SetFrameRef("ring", ring)
     close:SetAttribute("_onclick", [=[ self:GetFrameRef("ring"):Hide() ]=])
-    close:SetNormalTexture("Interface\\Buttons\\UI-Panel-MinimizeButton-Up")
-    close:SetPushedTexture("Interface\\Buttons\\UI-Panel-MinimizeButton-Down")
-    close:SetHighlightTexture("Interface\\Buttons\\UI-Panel-MinimizeButton-Highlight", "ADD")
+    if R.opts.noClose then
+        -- Menu rond : pas de croix dessinée, mais tout le milieu ferme le rond d'un appui.
+        close:SetSize(76, 76)
+    else
+        close:SetNormalTexture("Interface\\Buttons\\UI-Panel-MinimizeButton-Up")
+        close:SetPushedTexture("Interface\\Buttons\\UI-Panel-MinimizeButton-Down")
+        close:SetHighlightTexture("Interface\\Buttons\\UI-Panel-MinimizeButton-Highlight", "ADD")
+    end
 
     local edit = CreateFrame("Button", nil, ring)
     edit:SetSize(76, 20)
@@ -1292,6 +1316,18 @@ function R.Build()
     edit.text:SetText("Modifier")
     edit:SetScript("OnClick", function() R.OpenEditor() end)
     ring.close, ring.edit = close, edit
+    -- Rond ouvert : Échap (touche Échap de l'appli comprise) le ferme, même en combat.
+    local esc = CreateFrame("Frame", nil, ring, "SecureHandlerShowHideTemplate")
+    esc:SetFrameRef("main", main)
+    esc:SetAttribute("closer", "StreamingTouchRingClose" .. R.opts.suffix)
+    esc:SetAttribute("_onshow", [=[
+        self:ClearBindings()
+        local main = self:GetFrameRef("main")
+        if main and main:GetAttribute("fixed") then return end
+        self:SetBindingClick(true, "ESCAPE", self:GetAttribute("closer"))
+    ]=])
+    esc:SetAttribute("_onhide", [=[ self:ClearBindings() ]=])
+    ring.esc = esc
     -- Toujours affiché : la touche change de page, on remet les onglets à jour.
     main:HookScript("OnClick", function()
         if R.cfg and R.cfg.open == "fixed" then R.Mark(R.ring:GetAttribute("current")) end
@@ -1456,15 +1492,27 @@ function R.FlyPop(k)
     if not pop then
         pop = CreateFrame("Frame", nil, R.ring, "SecureFrameTemplate")
         pop.back = RoundBox(pop, "BACKGROUND", 0, 14, 0)
-        pop.back:SetColor(.03, .07, .15, .88)
+        pop.back:SetColor(0, 0, 0, 0)
         pop.buttons = {}
+        pop:HookScript("OnShow", function() R.FadePops() end)
+        pop:HookScript("OnHide", function() R.FadePops() end)
         R.flyPool[k] = pop
     end
     return pop
 end
+-- Une bulle ouverte : les autres boutons du rond s'effacent (réglage « Fondu derrière » de l'onglet Barre).
+function R.FadePops()
+    local open
+    for _, pop in ipairs(R.flyPool or {}) do
+        if pop:IsShown() and R.ring and R.ring:IsShown() then open = pop end
+    end
+    local fade = addon.Fondu and addon.Fondu() or .35
+    for _, b in ipairs(R.pool or {}) do b:SetAlpha((open and b ~= open.owner) and fade or 1) end
+end
 -- Remplit la bulle du groupe (hors combat) : ses sorts appris, le plus proche du bouton en premier.
 function R.FillPop(k, b, item, parent, size, x, color, shape)
     local pop = R.FlyPop(k)
+    pop.owner = b
     local entries = {}
     if item.a == "PETBAR" then
         local bar = R.PetBar()
@@ -1536,6 +1584,7 @@ function R.FillPop(k, b, item, parent, size, x, color, shape)
         end
         btn:SetAttribute("macrotext", e.text)
         btn:SetAttribute("macro", e.macro)
+        if btn.spell then addon.AutoCast(btn, btn.spell, btn.spellID) end
         -- Au maintien : le lancement automatique du familier, sinon le second sort de la case (sous-menu).
         local hold = not auto and e.hold and R.Known(e.hold) and e.hold or nil
         local holdSpell = hold and hold.a == "SPELL" and (SpellName(hold.spell) or hold.name) or nil
@@ -1893,7 +1942,9 @@ function R.Layout()
     main:SetAttribute("keydown", GetCVarBool("ActionButtonUseKeyDown") and true or false)
     local fixed = cfg.open == "fixed"
     main:SetAttribute("fixed", fixed)
-    for _, t in ipairs({ring.edge, ring.plate, ring.edge2, ring.inner, ring.title, ring.close}) do t:SetShown(not fixed) end
+    for _, t in ipairs({ring.edge, ring.plate, ring.edge2, ring.inner, ring.title, ring.close}) do
+        t:SetShown(not fixed)
+    end
     ring.edit:Hide()
     local keyless = fixed and R.arrows ~= nil
     local layout = cfg.layout
@@ -2131,6 +2182,9 @@ function R.Layout()
             b.petSlot = petSlot
             b:SetAttribute("macrotext", text)
             b:SetAttribute("macro", macro)
+            if spell and not petSlot then
+                addon.AutoCast(b, spell, (item.a == "SPELL" and type(item.spell) == "number") and item.spell or nil)
+            end
             b:SetAttribute("clickbutton", secureClick)
             b.run = (not text and not macro and not spell and not secureClick) and run or nil
             b.spell = spell
@@ -2374,6 +2428,8 @@ function R.IsActive(name, id)
 end
 function R.Lit(b, on)
     on = on and true or false
+    -- Le halo jaune autour n'est plus montré : seulement la surbrillance sur l'icône.
+    if b.lit then b.glow:SetAlpha(0) end
     b.glow:SetShown(on)
     if b.lit then
         b.lit:SetShown(on)
@@ -3710,9 +3766,7 @@ function R.PropsHint(kind, t, holdable)
             return text .. "|cffff6060Couche 2 et En combat sont la même page : en combat, maintenir Couche 2 ne change rien."
                 .. " Touche une autre page en haut, puis « Couche 2 ».|r"
         end
-        return text .. "|cffb0b0b0Couche 2 : la page montrée tant que tu maintiens le bouton Couche 2."
-            .. " En combat / Hors combat : la page qui vient toute seule au début / à la fin du combat."
-            .. " Posture / forme : la page qui vient toute seule quand tu prends cette forme (touche pour changer).|r"
+        return text .. "|cffb0b0b0Ces pages viennent toutes seules (Couche 2 maintenue, combat, forme prise).|r"
     end
     if kind == "item" and t.a == "GROUP" then
         local page = R.GroupPage(t)
@@ -3916,7 +3970,7 @@ end
 -- Le menu rond (fenêtres, cibles, emotes…).
 addon.radial = NewRing({db = "ring", off = "radialOff", suffix = "", label = "Menu", what = "menu rond",
     title = "Menu rond — tout se modifie", slash = "STREAMINGTOUCHRING", command = "/strond",
-    defaultPos = {.2, .52}, migrate = true, defaults = function() return R.DEFAULT end})
+    defaultPos = {.2, .52}, migrate = true, noClose = true, defaults = function() return R.DEFAULT end})
 
 -- Le rond de sorts (aspects, pièges…) : s'ouvre au toucher ou reste toujours affiché.
 addon.spells = NewRing({db = "spellRing", off = "spellRingOff", suffix = "Spells", label = "Sorts", what = "rond de sorts",
@@ -3947,6 +4001,995 @@ addon.spells = NewRing({db = "spellRing", off = "spellRingOff", suffix = "Spells
         if cat == #tabs + 2 then return P.PageChoices() end
         return {}
     end})
+
+-- ==== Petite barre de sorts (2.6) ====
+-- Une barre à part de l'arc, pour les sorts qu'on veut sous la main (aspects, pistage, familier…) :
+-- 8 boutons au plus, glissés depuis le grimoire ou un sac. Un groupe du grimoire (Aspects, Pistage…) ou
+-- la barre du familier tient dans un seul bouton : on le touche, ses sorts s'ouvrent au-dessus.
+-- Sa poignée (le petit rond doré « Barre ») l'ouvre et la ferme d'un appui, même en combat ; Échap la ferme aussi.
+-- En ligne, en arc ou en éventail, à la taille voulue.
+-- Dans Radial.lua pour qu'un /reload suffise. Elle se sert de l'habillage, des recharges et des infobulles
+-- de l'arc de sorts (addon.spells).
+do
+local Q = {MAX = 8, buttons = {}, pops = {}, SIZE = 44, GAP = 6, HANDLE = 30}
+addon.barre = Q
+Q.SHAPES = {{"ligne", "Ligne"}, {"arc", "Arc"}, {"eventail", "Éventail"}}
+Q.HANDLE_ICON = "Interface\\Icons\\INV_Misc_Gem_Variety_01"
+Q.PET_ICON = "Ability_Hunter_BeastCall"
+Q.LIST_ICON = "INV_Misc_Bag_08"
+Q.SUBMAX = 12
+
+-- Le sort part à l'appui ou au relâché, comme les barres du jeu (réglage « lancer à l'appui »).
+-- Un bouton de groupe ouvre (ou ferme) ses sorts au lieu de lancer quelque chose.
+Q.PRE = [=[
+    local kd = owner:GetAttribute("keydown")
+    if (down and kd) or (not down and not kd) then
+        local pop = self:GetAttribute("flyout") and self:GetFrameRef("flypop")
+        if pop then
+            local open = pop:IsShown()
+            for i = 1, owner:GetAttribute("pops") or 0 do
+                local other = owner:GetFrameRef("pop" .. i)
+                if other then other:Hide() end
+            end
+            if not open then pop:Show() end
+            return false
+        end
+        return nil, "close"
+    end
+    return false
+]=]
+-- Après un sort : les groupes ouverts se referment, et la barre aussi (sauf si on veut qu'elle reste).
+Q.POST = [=[
+    for i = 1, owner:GetAttribute("pops") or 0 do
+        local other = owner:GetFrameRef("pop" .. i)
+        if other then other:Hide() end
+    end
+    if owner:GetAttribute("autoclose") then
+        local bar = owner:GetFrameRef("bar")
+        if bar then bar:Hide() end
+    end
+]=]
+-- La poignée : ouvre ou ferme la barre, aussi en combat.
+local TOGGLE = [=[
+    local bar = self:GetFrameRef("bar")
+    for i = 1, self:GetAttribute("pops") or 0 do
+        local other = self:GetFrameRef("pop" .. i)
+        if other then other:Hide() end
+    end
+    if bar:IsShown() then bar:Hide() else bar:Show() end
+]=]
+-- Barre ouverte : Échap la ferme (touche Échap de l'appli comprise), même en combat.
+local ESC_SHOW = [=[
+    self:ClearBindings()
+    self:SetBindingClick(true, "ESCAPE", "StreamingTouchBarrePoignee")
+]=]
+local ESC_HIDE = [=[ self:ClearBindings() ]=]
+
+function Q.Config()
+    StreamingTouchDB = StreamingTouchDB or {}
+    local c = StreamingTouchDB.barre
+    if type(c) ~= "table" then
+        c = {open = true, shape = "ligne", dir = -1, scale = 1, items = {}}
+        StreamingTouchDB.barre = c
+    end
+    if type(c.items) ~= "table" then c.items = {} end
+    return c
+end
+
+-- Place de la poignée, en points de l'écran (UIParent). Par défaut : en bas, à gauche du milieu.
+function Q.Pos()
+    local c = Q.Config()
+    if type(c.pos) == "table" and tonumber(c.pos.x) and tonumber(c.pos.y) then return c.pos.x, c.pos.y end
+    return UIParent:GetWidth() * .42, UIParent:GetHeight() * .24
+end
+
+local function Group(item) return item and (item.a == "FLYOUT" or item.a == "PETBAR" or item.a == "LISTE") end
+Q.Group = Group
+
+-- Nom et icône d'un bouton. Une sous-barre à soi (LISTE) : son nom, l'icône de son premier bouton.
+function Q.Look(item)
+    if item.a == "LISTE" then
+        local first = item.items and item.items[1]
+        local icon = first and select(2, addon.spells.Resolve(first))
+        return item.label or "Sous-barre", icon or Q.LIST_ICON
+    end
+    local label, icon = addon.spells.Resolve(item)
+    if item.a == "PETBAR" then icon = Q.PET_ICON end
+    return label, icon
+end
+
+function Q.Build()
+    if Q.frame then return end
+    local P = addon.spells
+    local f = CreateFrame("Frame", "StreamingTouchBarre", UIParent, "SecureFrameTemplate")
+    f:SetSize(1, 1)
+    f:SetFrameStrata("HIGH")
+    Q.frame = f
+    local bar = CreateFrame("Frame", "StreamingTouchBarreSorts", f, "SecureFrameTemplate")
+    bar:SetAllPoints(f)
+    Q.bar = bar
+    -- Fermée par un sort (code sûr) : la poignée s'éteint quand même.
+    bar:HookScript("OnHide", function() if Q.handle then Q.PaintHandle() end end)
+    bar:HookScript("OnShow", function() if Q.handle then Q.PaintHandle() end end)
+    local h = CreateFrame("Button", "StreamingTouchBarrePoignee", f, "SecureHandlerClickTemplate")
+    h:RegisterForClicks("AnyUp")
+    h:SetFrameRef("bar", bar)
+    h:SetAttribute("_onclick", TOGGLE)
+    h:SetAttribute("pops", 0)
+    h:SetAttribute("keydown", GetCVarBool("ActionButtonUseKeyDown") and true or false)
+    P.Visual(h)
+    h:SetFrameLevel(f:GetFrameLevel() + 5)
+    h:HookScript("OnClick", function()
+        if not InCombatLockdown() and CursorItems() then Q.Drop() return end
+        Q.Config().open = Q.bar:IsShown()
+        Q.PaintHandle()
+        if Q.bar:IsShown() then Q.Update() end
+    end)
+    h:HookScript("OnEnter", function(self)
+        local tip = GameTooltip
+        if not tip then return end
+        if GameTooltip_SetDefaultAnchor then GameTooltip_SetDefaultAnchor(tip, self) else tip:SetOwner(self, "ANCHOR_LEFT") end
+        tip:SetText(Q.Config().name or "Petite barre de sorts", 1, .82, .32)
+        tip:AddLine("Touche : ouvrir / fermer (Échap la ferme aussi).", .9, .9, .9)
+        tip:AddLine("Lâche un sort du grimoire ou un objet d'un sac ici : il va au bout de la barre.", .3, .9, .95, true)
+        tip:Show()
+    end)
+    h:HookScript("OnLeave", function(self)
+        if GameTooltip and GameTooltip.GetOwner and GameTooltip:GetOwner() == self then GameTooltip:Hide() end
+    end)
+    h:SetScript("OnReceiveDrag", function() Q.Drop() end)
+    Q.handle = h
+    local esc = CreateFrame("Frame", nil, bar, "SecureHandlerShowHideTemplate")
+    esc:SetAttribute("_onshow", ESC_SHOW)
+    esc:SetAttribute("_onhide", ESC_HIDE)
+    Q.esc = esc
+end
+
+local function Hooks(b)
+    local P = addon.spells
+    b:RegisterForClicks("AnyUp", "AnyDown")
+    P.Visual(b)
+    P.AddCooldown(b)
+    SecureHandlerWrapScript(b, "OnClick", Q.handle, Q.PRE, Q.POST)
+    b:HookScript("OnEnter", function(self) P.Tooltip(self) end)
+    b:HookScript("OnLeave", function(self) P.HideTooltip(self) end)
+end
+
+function Q.Button(i)
+    local b = Q.buttons[i]
+    if b then return b end
+    b = CreateFrame("Button", "StreamingTouchBarreSort" .. i, Q.bar, "SecureActionButtonTemplate")
+    Hooks(b)
+    -- Lâché sur un bouton de la barre : le nouveau prend sa place ; sur une sous-barre à soi : il y entre.
+    b:SetScript("OnReceiveDrag", function(self)
+        local item = Q.Config().items[self.index]
+        if item and item.a == "LISTE" then Q.DropSub(self.index) else Q.Drop(self.index) end
+    end)
+    -- Maj + glisser : le sort quitte la barre, comme sur les barres du jeu.
+    b:RegisterForDrag("LeftButton")
+    b:SetScript("OnDragStart", function(self) Q.PickUp(self.index) end)
+    b.index = i
+    Q.buttons[i] = b
+    return b
+end
+
+-- La bulle d'un groupe : ses sorts au-dessus du bouton, sans fond. En ligne (6 par rangée), en arc ou en éventail.
+function Q.Pop(k)
+    local pop = Q.pops[k]
+    if pop then return pop end
+    pop = CreateFrame("Frame", "StreamingTouchBarreGroupe" .. k, Q.bar, "SecureFrameTemplate")
+    pop:SetClampedToScreen(true)
+    pop.buttons = {}
+    -- Un groupe ouvert : le reste de la barre s'efface un peu (réglable), même en combat.
+    pop:HookScript("OnShow", function() Q.Fade() end)
+    pop:HookScript("OnHide", function() Q.Fade() end)
+    Q.pops[k] = pop
+    return pop
+end
+
+-- Fondu derrière un groupe ouvert : la barre et le rond (StreamingTouchDB.fondu, 35 % par défaut).
+function addon.Fondu()
+    local v = tonumber(StreamingTouchDB and StreamingTouchDB.fondu) or .35
+    return math.max(.1, math.min(1, v))
+end
+function Q.Fade()
+    local open
+    for _, pop in ipairs(Q.pops) do
+        if pop:IsShown() and Q.bar:IsShown() then open = pop end
+    end
+    local fade = addon.Fondu()
+    for _, b in ipairs(Q.buttons) do b:SetAlpha((open and b ~= open.owner) and fade or 1) end
+    if Q.handle then Q.handle:SetAlpha(open and fade or 1) end
+end
+
+-- Ce que contient un groupe : sorts d'un groupe du grimoire, barre du familier, ou ce qu'on a mis dans sa sous-barre.
+function Q.Entries(item)
+    local P = addon.spells
+    local entries = {}
+    if item.a == "PETBAR" then
+        local bar = P.PetBar()
+        for slot = 1, NUM_PET_ACTION_SLOTS or 10 do
+            if bar[slot] then entries[#entries + 1] = {pet = bar[slot], icon = bar[slot].icon} end
+        end
+    elseif item.a == "FLYOUT" then
+        for _, s in ipairs(FlyoutSpells(item.flyout)) do entries[#entries + 1] = {spell = s.spell, label = s.label, icon = s.icon} end
+    elseif item.a == "LISTE" then
+        for _, sub in ipairs(item.items or {}) do
+            local label, icon, text, macro, _, spell = P.Resolve(sub)
+            if sub.a == "SPELL" and spell then
+                entries[#entries + 1] = {spell = sub.spell, label = spell, icon = icon}
+            elseif text or macro then
+                entries[#entries + 1] = {text = text, macro = macro, label = label, icon = icon,
+                    itemID = sub.a == "ITEM" and sub.item or nil}
+            end
+        end
+    end
+    return entries
+end
+
+-- Place du j-ième sort (sur n) d'une bulle, par rapport au centre de son bouton.
+function Q.PopPlace(shape, j, n, size)
+    local pitch = size + 6
+    local span = shape == "arc" and math.rad(120) or math.pi
+    local r = math.max(size * 1.6, (math.max(1, n) - 1) * pitch / span)
+    local a = n > 1 and (math.pi / 2 + span / 2 - (j - 1) * span / (n - 1)) or math.pi / 2
+    return math.cos(a) * r, math.sin(a) * r
+end
+
+function Q.FillPop(k, b, item, size)
+    local P = addon.spells
+    local pop = Q.Pop(k)
+    local entries = Q.Entries(item)
+    local shape = item.shape or "ligne"
+    pop.owner = b
+    pop:SetFrameLevel(Q.bar:GetFrameLevel() + 20)
+    pop:Hide()
+    local pitch = size + 6
+    local perRow = math.max(1, math.min(6, #entries))
+    local rows = math.max(1, math.ceil(#entries / perRow))
+    pop:ClearAllPoints()
+    if shape == "ligne" then
+        pop:SetSize(perRow * pitch + 6, rows * pitch + 6)
+        pop:SetPoint("BOTTOM", b, "TOP", 0, 6)
+    else
+        pop:SetSize(1, 1)
+        pop:SetPoint("CENTER", b, "CENTER", 0, 0)
+    end
+    b.flySpells = item.a ~= "PETBAR" and {} or nil
+    b.petGroup = item.a == "PETBAR" or nil
+    for j, e in ipairs(entries) do
+        local btn = pop.buttons[j]
+        if not btn then
+            btn = CreateFrame("Button", "StreamingTouchBarreGroupe" .. k .. "Sort" .. j, pop, "SecureActionButtonTemplate")
+            Hooks(btn)
+            pop.buttons[j] = btn
+        end
+        local col, row = (j - 1) % perRow, math.floor((j - 1) / perRow)
+        btn:SetFrameLevel(pop:GetFrameLevel() + 2)
+        btn:ClearAllPoints()
+        if shape == "ligne" then
+            btn:SetPoint("CENTER", pop, "BOTTOMLEFT", 3 + (col + .5) * pitch, 3 + (row + .5) * pitch)
+        else
+            local x, y = Q.PopPlace(shape, j, #entries, size)
+            btn:SetPoint("CENTER", pop, "CENTER", x, y)
+        end
+        local auto
+        btn.itemID = nil
+        btn:SetAttribute("macrotext", nil)
+        btn:SetAttribute("macro", nil)
+        if e.pet then
+            auto = e.pet.allowed and not e.pet.token and e.pet.name or nil
+            btn:SetAttribute("type", "pet")
+            btn:SetAttribute("action", e.pet.slot)
+            btn:SetAttribute("spell", nil)
+            btn.spell, btn.spellID, btn.petSlot = nil, nil, e.pet.slot
+        elseif e.text or e.macro then
+            -- Nourriture, potion, macro… : comme sur la barre.
+            btn:SetAttribute("type", "macro")
+            btn:SetAttribute("action", nil)
+            btn:SetAttribute("spell", nil)
+            btn:SetAttribute("macrotext", e.text)
+            btn:SetAttribute("macro", e.macro)
+            btn.spell, btn.spellID, btn.petSlot, btn.itemID = nil, nil, nil, e.itemID
+        else
+            local name = SpellName(e.spell) or e.label
+            btn:SetAttribute("type", "spell")
+            btn:SetAttribute("spell", name)
+            btn:SetAttribute("action", nil)
+            btn.spell, btn.spellID, btn.petSlot = name, e.spell, nil
+            b.flySpells[#b.flySpells + 1] = {name = name, icon = e.icon, id = e.spell}
+            addon.AutoCast(btn, name, e.spell)
+        end
+        -- Clic droit (ou maintien) sur un sort du familier : son lancement automatique.
+        btn:SetAttribute("type2", auto and "macro" or nil)
+        btn:SetAttribute("macrotext2", auto and ("/petautocasttoggle " .. auto) or nil)
+        btn.name = btn.spell or (e.pet and e.pet.name) or e.label
+        P.Paint(btn, size, e.icon, item.color or "or", "round", "")
+        btn:Show()
+    end
+    for j = #entries + 1, #pop.buttons do
+        local btn = pop.buttons[j]
+        btn:Hide()
+        btn:SetAttribute("type", nil)
+        btn:SetAttribute("type2", nil)
+        btn.spell, btn.petSlot, btn.itemID = nil, nil, nil
+    end
+    SecureHandlerSetFrameRef(b, "flypop", pop)
+    Q.handle:SetFrameRef("pop" .. k, pop)
+    b:SetAttribute("flyout", true)
+    -- Petite flèche : ce bouton s'ouvre.
+    if not b.flyMark then
+        b.flyMark = b:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+        if STANDARD_TEXT_FONT then pcall(b.flyMark.SetFont, b.flyMark, STANDARD_TEXT_FONT, 16, "THICKOUTLINE") end
+        b.flyMark:SetPoint("CENTER", b, "TOP", 0, -4)
+        b.flyMark:SetText("^")
+    end
+    b.flyMark:Show()
+end
+
+-- Place du i-ème bouton (sur n), par rapport à la poignée. Ligne : tout droit ; arc : une courbe qui monte ;
+-- éventail : un demi-cercle au-dessus de la poignée. dir = -1 vers la gauche, 1 vers la droite.
+function Q.Place(shape, dir, i, n, size, gap)
+    local step = size + gap
+    if shape == "eventail" then
+        local r = math.max(size * 1.5, n * step / math.pi)
+        local a = math.rad(180 - (i - .5) * 180 / n)
+        return math.cos(a) * r, math.sin(a) * r
+    end
+    local x = dir * (i * step + (Q.HANDLE / 2 - size / 2))
+    if shape == "arc" then
+        local depth = math.max(1, n) * step * 3
+        return x, (x * x) / depth
+    end
+    return x, 0
+end
+
+function Q.PlacePos()
+    local f = Q.frame
+    if not f or InCombatLockdown() then return end
+    local scale = f:GetScale() or 1
+    local x, y = Q.Pos()
+    f:ClearAllPoints()
+    f:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x / scale, y / scale)
+end
+
+function Q.PaintHandle()
+    local h = Q.handle
+    if not h then return end
+    local P = addon.spells
+    P.Paint(h, Q.HANDLE, Q.HANDLE_ICON, "or", "round", Q.Config().name or "Barre")
+    P.Lit(h, Q.bar:IsShown())
+end
+
+function Q.Layout()
+    if not Q.frame then return end
+    if InCombatLockdown() then Q.pending = true return end
+    Q.pending = nil
+    local P = addon.spells
+    local db = StreamingTouchDB or {}
+    local c = Q.Config()
+    local f, bar, h = Q.frame, Q.bar, Q.handle
+    f:SetScale(math.max(.5, math.min(2, tonumber(c.scale) or 1)))
+    Q.PlacePos()
+    h:ClearAllPoints()
+    h:SetPoint("CENTER", f, "CENTER", 0, 0)
+    local items, size, gap = c.items, Q.SIZE, Q.GAP
+    local n = math.min(#items, Q.MAX)
+    local dir = (tonumber(c.dir) or -1) > 0 and 1 or -1
+    local pops = 0
+    for i = 1, n do
+        local b = Q.Button(i)
+        local item = items[i]
+        local label, icon, text, macro, _, spell, _, petSlot = P.Resolve(item)
+        if Group(item) then
+            label, icon = Q.Look(item)
+            text, macro, spell, petSlot = nil, nil, nil, nil
+        end
+        local x, y = Q.Place(c.shape, dir, i, n, size, gap)
+        b:ClearAllPoints()
+        b:SetPoint("CENTER", f, "CENTER", x, y)
+        b:SetAttribute("type", petSlot and "pet" or spell and "spell" or (text or macro) and "macro" or nil)
+        b:SetAttribute("action", petSlot)
+        b:SetAttribute("spell", (not petSlot) and spell or nil)
+        b:SetAttribute("macrotext", text)
+        b:SetAttribute("macro", macro)
+        if spell and not petSlot then
+            addon.AutoCast(b, spell, (item.a == "SPELL" and type(item.spell) == "number") and item.spell or nil)
+        end
+        b.spell, b.petSlot, b.item, b.name, b.run, b.hold = spell, petSlot, item, label, nil, nil
+        b.spellID = (item.a == "SPELL" and type(item.spell) == "number") and item.spell or nil
+        b.itemID = item.a == "ITEM" and item.item or nil
+        P.Paint(b, size, icon, item.color or "or", "round", "")
+        if Group(item) then
+            pops = pops + 1
+            Q.FillPop(pops, b, item, size)
+            b.flyIcon = I(icon) or icon
+        else
+            b:SetAttribute("flyout", nil)
+            b.flySpells, b.flyIcon, b.petGroup = nil, nil, nil
+            if b.flyMark then b.flyMark:Hide() end
+        end
+        b:Show()
+    end
+    for i = n + 1, #Q.buttons do Q.buttons[i]:Hide() end
+    for k = pops + 1, #Q.pops do Q.pops[k]:Hide() end
+    h:SetAttribute("pops", pops)
+    h:SetAttribute("autoclose", c.autoclose ~= false)
+    bar:SetShown(c.open ~= false)
+    f:SetShown(not db.barreOff)
+    Q.PaintHandle()
+    Q.Fade()
+    Q.Update()
+end
+
+-- Tous les boutons de sort : ceux de la barre et ceux des groupes.
+function Q.All()
+    local list = {}
+    for _, b in ipairs(Q.buttons) do list[#list + 1] = b end
+    for _, pop in ipairs(Q.pops) do
+        for _, b in ipairs(pop.buttons) do list[#list + 1] = b end
+    end
+    return list
+end
+
+-- Recharges, sort actif (aspect en cours), utilisable : comme sur l'arc.
+function Q.Update()
+    local P = addon.spells
+    if not Q.frame or not Q.bar:IsShown() then return end
+    pcall(function() P.actNames, P.actIds = P.ActiveSet() end)
+    pcall(function() P.petTokens, P.petSpells = P.PetState() end)
+    for _, b in ipairs(Q.All()) do
+        if b:IsShown() then pcall(P.UpdateButton, b) end
+    end
+end
+
+-- Hors de portée : l'icône passe au rouge (4 fois par seconde, seulement barre ouverte).
+function Q.UpdateRange()
+    if not Q.frame or not Q.bar:IsVisible() then return end
+    local P = addon.spells
+    for _, b in ipairs(Q.All()) do
+        if b:IsVisible() then
+            local out = (b.spell and not b.petSlot) and SpellRange(b.spell) == false or false
+            if out ~= (b.outOfRange or false) then
+                b.outOfRange = out
+                pcall(P.Tint, b)
+            end
+        end
+    end
+end
+
+local function Key(x)
+    if x.a == "SPELL" then return "S" .. tostring(SpellName(x.spell) or x.label or x.spell) end
+    if x.a == "ITEM" then return "I" .. tostring(x.item) end
+    if x.a == "MACRO" then return "M" .. tostring(x.macro) end
+    if x.a == "FLYOUT" then return "F" .. tostring(x.flyout) end
+    if x.a == "PETBAR" then return "B" end
+    if x.a == "LISTE" then return "L" .. tostring(x.id) end
+    return tostring(x.a)
+end
+
+-- Ajoute (ou met à la place at) une liste de boutons ; dit ce qui s'est passé.
+function Q.Add(list, at)
+    local items = Q.Config().items
+    local have = {}
+    for _, old in ipairs(items) do have[Key(old)] = true end
+    local added, full = {}, false
+    for _, item in ipairs(list) do
+        local k = Key(item)
+        if not have[k] then
+            if at and items[at] then
+                have[Key(items[at])] = nil
+                items[at] = item
+                at = nil
+            elseif #items >= Q.MAX then
+                full = true
+                break
+            else
+                items[#items + 1] = item
+            end
+            have[k] = true
+            added[#added + 1] = item.label or "?"
+        end
+    end
+    if #added > 0 then
+        Q.Config().open = true
+        Q.Layout()
+        Say("petite barre : " .. table.concat(added, ", ") .. ".")
+    end
+    if full then
+        Say("la petite barre est pleine (" .. Q.MAX .. " boutons) : lâche le sort sur un autre pour le remplacer.")
+    elseif #added == 0 and #list > 0 then
+        Say("déjà dans la petite barre.")
+    end
+    if addon.settings and addon.settings.Refresh then pcall(addon.settings.Refresh) end
+end
+
+-- Ce que tient le doigt (sort, groupe du grimoire, macro, objet) rejoint la barre. at : lâché sur ce bouton.
+-- Un groupe (Aspects, Pistage…) reste un seul bouton qui s'ouvre.
+function Q.Drop(at)
+    if InCombatLockdown() then return end
+    local list = CursorItems()
+    if not list then
+        if GetCursorInfo and GetCursorInfo() then Say("on ne peut mettre ici que des sorts, des macros et des objets.") end
+        return
+    end
+    if ClearCursor then ClearCursor() end
+    local keep = {}
+    for _, item in ipairs(list) do
+        if item.a == "FLYOUT" or item.a == "SPELL" or item.a == "ITEM" or item.a == "MACRO" then keep[#keep + 1] = item end
+    end
+    Q.Add(keep, at)
+end
+
+-- La barre du familier du jeu en un bouton.
+function Q.AddPet()
+    if InCombatLockdown() then Say("pas pendant un combat.") return end
+    Q.Add({{a = "PETBAR", label = "Familier", icon = Q.PET_ICON}})
+end
+
+-- Une sous-barre à soi (nourriture, potions, sorts…) : un bouton de la barre qui s'ouvre.
+function Q.AddList()
+    if InCombatLockdown() then Say("pas pendant un combat.") return end
+    local c = Q.Config()
+    c.nextId = (tonumber(c.nextId) or 0) + 1
+    local n = 0
+    for _, item in ipairs(c.items) do if item.a == "LISTE" then n = n + 1 end end
+    local before = #c.items
+    Q.Add({{a = "LISTE", id = c.nextId, label = n == 0 and "Sous-barre" or ("Sous-barre " .. (n + 1)), items = {}}})
+    if #c.items > before then
+        Q.sel = #c.items
+        if addon.settings and addon.settings.Refresh then pcall(addon.settings.Refresh) end
+    end
+end
+
+-- Ce que tient le doigt entre dans la sous-barre i (à la place j si on l'a lâché sur une case pleine).
+function Q.DropSub(i, j)
+    if InCombatLockdown() then return end
+    local group = Q.Config().items[i]
+    if not group or group.a ~= "LISTE" then return end
+    local list = CursorItems()
+    if not list then
+        if GetCursorInfo and GetCursorInfo() then Say("on ne peut mettre ici que des sorts, des macros et des objets.") end
+        return
+    end
+    if ClearCursor then ClearCursor() end
+    group.items = group.items or {}
+    local subs = group.items
+    local have = {}
+    for _, old in ipairs(subs) do have[Key(old)] = true end
+    local added, full = {}, false
+    for _, item in ipairs(list) do
+        local flat = item.a == "FLYOUT" and FlyoutSpells(item.flyout) or {item}
+        for _, x in ipairs(flat) do
+            local k = Key(x)
+            if (x.a == "SPELL" or x.a == "ITEM" or x.a == "MACRO") and not have[k] then
+                if j and subs[j] then
+                    have[Key(subs[j])] = nil
+                    subs[j] = x
+                    j = nil
+                elseif #subs >= Q.SUBMAX then
+                    full = true
+                else
+                    subs[#subs + 1] = x
+                end
+                if not full then
+                    have[k] = true
+                    added[#added + 1] = x.label or "?"
+                end
+            end
+        end
+    end
+    if #added > 0 then
+        Q.Layout()
+        Say((group.label or "Sous-barre") .. " : " .. table.concat(added, ", ") .. ".")
+    end
+    if full then Say((group.label or "La sous-barre") .. " est pleine (" .. Q.SUBMAX .. " boutons).") end
+    if addon.settings and addon.settings.Refresh then pcall(addon.settings.Refresh) end
+end
+
+-- Réglages d'un groupe choisi dans l'onglet : sa forme, son nom, ce qu'il contient.
+function Q.SelGroup()
+    local item = Q.sel and Q.Config().items[Q.sel]
+    return Group(item) and item or nil
+end
+function Q.SetSub(field, value)
+    local item = Q.SelGroup()
+    if not item then return end
+    item[field] = value
+    Q.Layout()
+    if addon.settings and addon.settings.Refresh then pcall(addon.settings.Refresh) end
+end
+function Q.RemoveSub()
+    local item = Q.SelGroup()
+    if not item or item.a ~= "LISTE" or not Q.subSel or not item.items[Q.subSel] then return end
+    local gone = table.remove(item.items, Q.subSel)
+    Q.subSel = nil
+    Say("retiré de " .. (item.label or "la sous-barre") .. " : " .. (gone.label or "?") .. ".")
+    Q.Layout()
+    if addon.settings and addon.settings.Refresh then pcall(addon.settings.Refresh) end
+end
+function Q.Rename(text)
+    text = text and text:gsub("^%s+", ""):gsub("%s+$", "") or ""
+    if text == "" then text = nil end
+    Q.Config().name = text
+    Q.PaintHandle()
+    if addon.settings and addon.settings.Refresh then pcall(addon.settings.Refresh) end
+end
+
+-- Maj + glisser : le sort quitte la barre et reste au bout du doigt.
+function Q.PickUp(i)
+    if InCombatLockdown() or not (IsShiftKeyDown and IsShiftKeyDown()) then return end
+    local items = Q.Config().items
+    local item = items[i]
+    if not item then return end
+    table.remove(items, i)
+    pcall(function()
+        if item.a == "SPELL" then
+            local pick = (C_Spell and C_Spell.PickupSpell) or PickupSpell
+            if pick then pick(item.spell) end
+        elseif item.a == "ITEM" then
+            local pick = (C_Item and C_Item.PickupItem) or PickupItem
+            if pick then pick(item.item) end
+        elseif item.a == "MACRO" and PickupMacro then
+            PickupMacro(item.macro)
+        end
+    end)
+    Q.Layout()
+    Say("retiré de la petite barre : " .. (item.label or "?") .. ".")
+    if addon.settings and addon.settings.Refresh then pcall(addon.settings.Refresh) end
+end
+
+-- Réglages (onglet « Barre » de /stouch).
+local function Refresh()
+    Q.Layout()
+    if addon.settings and addon.settings.Refresh then pcall(addon.settings.Refresh) end
+end
+function Q.Set(field, value)
+    Q.Config()[field] = value
+    Refresh()
+end
+function Q.SetOff(off)
+    StreamingTouchDB.barreOff = off or nil
+    Q.Build()
+    Refresh()
+end
+function Q.Step(delta)
+    local c = Q.Config()
+    c.scale = math.max(.6, math.min(1.8, (tonumber(c.scale) or 1) + delta))
+    Refresh()
+end
+function Q.StepFade(delta)
+    StreamingTouchDB = StreamingTouchDB or {}
+    StreamingTouchDB.fondu = math.floor(math.max(.1, math.min(1, addon.Fondu() + delta)) * 100 + .5) / 100
+    Q.Fade()
+    if addon.FadeRings then pcall(addon.FadeRings) end
+    if addon.settings and addon.settings.Refresh then pcall(addon.settings.Refresh) end
+end
+function Q.MoveSel(step)
+    local items, i = Q.Config().items, Q.sel
+    if not i or not items[i] or not items[i + step] then return end
+    items[i], items[i + step] = items[i + step], items[i]
+    Q.sel = i + step
+    Refresh()
+end
+function Q.RemoveSel()
+    local items, i = Q.Config().items, Q.sel
+    if not i or not items[i] then return end
+    local gone = table.remove(items, i)
+    Q.sel = #items > 0 and math.min(i, #items) or nil
+    Say("retiré de la petite barre : " .. (gone.label or "?") .. ".")
+    Refresh()
+end
+
+-- Déplacer la barre : on glisse le doigt n'importe où, la poignée suit.
+function Q.StartMove(done)
+    if InCombatLockdown() then Say("pas pendant un combat.") return end
+    Q.Build()
+    local m = Q.mover
+    if not m then
+        m = CreateFrame("Frame", nil, UIParent)
+        Q.mover = m
+        m:SetAllPoints(UIParent)
+        m:SetFrameStrata("FULLSCREEN_DIALOG")
+        m:EnableMouse(true)
+        local shade = m:CreateTexture(nil, "BACKGROUND")
+        shade:SetAllPoints()
+        shade:SetColorTexture(.02, .06, .14, .25)
+        m.text = m:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
+        m.text:SetPoint("TOP", 0, -90)
+        m.text:SetWidth(math.max(300, UIParent:GetWidth() * .6))
+        m.text:SetText("Glisse le doigt n'importe où (hors des joysticks de l'appli) : la petite barre suit. Puis touche « Terminé ».")
+        for k, def in ipairs({{"Terminé", true, -76}, {"Annuler", false, 76}}) do
+            local b = CreateFrame("Button", nil, m, "UIPanelButtonTemplate")
+            b:SetSize(140, 30)
+            b:SetText(def[1])
+            b:SetPoint("TOP", def[3], -150)
+            b:SetScript("OnClick", function() Q.EndMove(def[2]) end)
+            m[k] = b
+        end
+        m:SetScript("OnMouseDown", function(self)
+            local s = UIParent:GetEffectiveScale()
+            local x, y = GetCursorPosition()
+            local px, py = Q.Pos()
+            self.grab = {x / s, y / s, px, py}
+        end)
+        m:SetScript("OnMouseUp", function(self) self.grab = nil end)
+        m:SetScript("OnUpdate", function(self)
+            local g = self.grab
+            if not g or InCombatLockdown() then return end
+            local s = UIParent:GetEffectiveScale()
+            local x, y = GetCursorPosition()
+            local w, h = UIParent:GetWidth(), UIParent:GetHeight()
+            Q.Config().pos = {x = math.max(0, math.min(w, g[3] + x / s - g[1])), y = math.max(0, math.min(h, g[4] + y / s - g[2]))}
+            Q.PlacePos()
+        end)
+    end
+    local pos = Q.Config().pos
+    m.before = type(pos) == "table" and {x = pos.x, y = pos.y} or false
+    m.grab, m.done = nil, done
+    Q.frame:Show()
+    m:Show()
+end
+function Q.EndMove(keep)
+    local m = Q.mover
+    if not m then return end
+    m.grab = nil
+    m:Hide()
+    if not keep then Q.Config().pos = m.before or nil end
+    Q.Layout()
+    if keep then Say("petite barre déplacée.") end
+    if m.done then m.done() end
+end
+
+-- L'onglet « Barre » des réglages (construit par G.Build, rafraîchi par G.Refresh).
+local function NameBox(parent, width, onDone)
+    local box = CreateFrame("EditBox", nil, parent, "InputBoxTemplate")
+    box:SetSize(width, 26)
+    box:SetAutoFocus(false)
+    box:SetMaxLetters(24)
+    box:SetFontObject("GameFontHighlight")
+    box:SetScript("OnEnterPressed", function(self) onDone(self:GetText()) self:ClearFocus() end)
+    box:SetScript("OnEditFocusLost", function(self) onDone(self:GetText()) end)
+    box:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+    return box
+end
+
+local function Tile(parent, size, onDrop, onClick)
+    local t = CreateFrame("Button", nil, parent)
+    t:SetSize(size, size)
+    t.icon = t:CreateTexture(nil, "ARTWORK")
+    t.icon:SetAllPoints()
+    t.sel = t:CreateTexture(nil, "OVERLAY")
+    t.sel:SetColorTexture(1, .82, .32, .45)
+    t.sel:SetAllPoints()
+    t.sel:Hide()
+    t:SetScript("OnReceiveDrag", onDrop)
+    t:SetScript("OnClick", function()
+        if GetCursorInfo and GetCursorInfo() then onDrop() return end
+        onClick()
+    end)
+    return t
+end
+
+local function ShowIcon(t, item)
+    if item then
+        local _, icon = Q.Look(item)
+        t.icon:SetTexture(I(icon) or icon)
+        t.icon:SetTexCoord(.07, .93, .07, .93)
+    else
+        t.icon:SetColorTexture(.12, .14, .2, .7)
+    end
+end
+
+function Q.BuildSettings(s, G)
+    local Pill, Font, Section, Stepper = G.Pill, G.Font, G.Section, G.Stepper
+    local function Again() if G.Refresh then G.Refresh() end end
+    Section(s, "Petite barre de sorts", 0, 0, 290)
+    s.show = Pill(s, 140, 30, "Affichée", function() Q.SetOff(false) end, Q.HANDLE_ICON)
+    s.show:SetPoint("TOPLEFT", 0, -24)
+    s.hide = Pill(s, 120, 30, "Masquée", function() Q.SetOff(true) end)
+    s.hide:SetPoint("LEFT", s.show, "RIGHT", 8, 0)
+    Section(s, "Nom de la poignée", 310, 0, 290)
+    s.name = NameBox(s, 200, Q.Rename)
+    s.name:SetPoint("TOPLEFT", 318, -26)
+    s.autoclose = Pill(s, 300, 24, "", function() Q.Set("autoclose", Q.Config().autoclose == false) end)
+    s.autoclose:SetPoint("TOPLEFT", 0, -58)
+    Section(s, "Forme", 0, -84, 290)
+    s.shapes = {}
+    for i, sh in ipairs(Q.SHAPES) do
+        local b = Pill(s, 92, 28, sh[2], function() Q.Set("shape", sh[1]) end)
+        b:SetPoint("TOPLEFT", (i - 1) * 98, -106)
+        s.shapes[i] = b
+    end
+    Section(s, "Sens", 310, -84, 290)
+    s.left = Pill(s, 140, 28, "Vers la gauche", function() Q.Set("dir", -1) end)
+    s.left:SetPoint("TOPLEFT", 310, -106)
+    s.right = Pill(s, 140, 28, "Vers la droite", function() Q.Set("dir", 1) end)
+    s.right:SetPoint("LEFT", s.left, "RIGHT", 8, 0)
+    Section(s, "Taille", 0, -146, 140)
+    s.size = Stepper(s, 0, -168, function() Q.Step(-.1) end, function() Q.Step(.1) end)
+    -- Fondu : ce qui reste visible derrière un groupe ouvert (barre et ronds).
+    Section(s, "Fondu derrière", 152, -146, 140)
+    s.fade = Stepper(s, 152, -168, function() Q.StepFade(-.05) end, function() Q.StepFade(.05) end)
+    Section(s, "Place", 310, -146, 290)
+    s.move = Pill(s, 170, 30, "Déplacer la barre", function()
+        if G.panel then G.panel:Hide() end
+        Q.StartMove(function() if not InCombatLockdown() then G.Open(6) end end)
+    end, "Interface\\Icons\\Ability_Rogue_Sprint")
+    s.move:SetPoint("TOPLEFT", 310, -168)
+    s.back = Pill(s, 110, 30, "Remettre", function() Q.Set("pos", nil) end)
+    s.back:SetPoint("LEFT", s.move, "RIGHT", 8, 0)
+    Section(s, "Les boutons de la barre (" .. Q.MAX .. " au plus)", 0, -210, 600)
+    s.tiles = {}
+    for i = 1, Q.MAX do
+        local t = Tile(s, 40, function() Q.Drop(i) end, function()
+            Q.sel, Q.subSel = i, nil
+            Again()
+        end)
+        t:SetPoint("TOPLEFT", (i - 1) * 46, -232)
+        s.tiles[i] = t
+    end
+    s.before = Pill(s, 40, 30, "<", function() Q.MoveSel(-1) end)
+    s.before:SetPoint("TOPLEFT", 380, -237)
+    s.after = Pill(s, 40, 30, ">", function() Q.MoveSel(1) end)
+    s.after:SetPoint("LEFT", s.before, "RIGHT", 6, 0)
+    s.remove = Pill(s, 110, 30, "Retirer", function() Q.RemoveSel() end)
+    s.remove:SetPoint("LEFT", s.after, "RIGHT", 6, 0)
+    s.list = Pill(s, 190, 30, "+ Sous-barre", function() Q.AddList() end, "Interface\\Icons\\" .. Q.LIST_ICON)
+    s.list:SetPoint("TOPLEFT", 0, -280)
+    s.pet = Pill(s, 210, 30, "+ Barre du familier", function() Q.AddPet() end, "Interface\\Icons\\" .. Q.PET_ICON)
+    s.pet:SetPoint("LEFT", s.list, "RIGHT", 8, 0)
+    s.help = Font(s, "GameFontHighlightSmall", "Pour ajouter : ouvre le grimoire (ou un sac) à côté de ce panneau, prends un sort ou un objet avec le doigt et lâche-le sur une case ci-dessus (ou n'importe où ici, ou sur le rond doré). Un groupe entier (Aspects, Pistage…) devient un seul bouton qui s'ouvre. « + Sous-barre » : un bouton à remplir toi-même (nourriture, potions…). Touche une case pour la choisir, puis < > pour la déplacer, ou « Retirer ».")
+    s.help:SetPoint("TOPLEFT", 0, -320)
+    s.help:SetWidth(600)
+    s.help:SetJustifyH("LEFT")
+    -- Le groupe choisi : sa forme ; pour une sous-barre à soi, aussi son nom et ce qu'elle contient.
+    local g = CreateFrame("Frame", nil, s)
+    g:SetPoint("TOPLEFT", 0, -318)
+    g:SetSize(600, 140)
+    s.group = g
+    g.title = Section(g, "", 0, 0, 600)
+    g.shapes = {}
+    for i, sh in ipairs(Q.SHAPES) do
+        local b = Pill(g, 84, 28, sh[2], function() Q.SetSub("shape", sh[1]) end)
+        b:SetPoint("TOPLEFT", (i - 1) * 90, -22)
+        g.shapes[i] = b
+    end
+    g.nameLabel = Font(g, "GameFontNormalSmall", "Nom :")
+    g.nameLabel:SetPoint("TOPLEFT", 284, -30)
+    g.name = NameBox(g, 200, function(text)
+        text = text and text:gsub("^%s+", ""):gsub("%s+$", "") or ""
+        local item = Q.SelGroup()
+        if item and item.a == "LISTE" and text ~= "" and text ~= item.label then Q.SetSub("label", text) end
+    end)
+    g.name:SetPoint("TOPLEFT", 330, -24)
+    g.tiles = {}
+    for j = 1, Q.SUBMAX do
+        local t = Tile(g, 30, function() if Q.sel then Q.DropSub(Q.sel, j) end end, function()
+            Q.subSel = j
+            Again()
+        end)
+        t:SetPoint("TOPLEFT", (j - 1) * 34, -62)
+        g.tiles[j] = t
+    end
+    g.remove = Pill(g, 84, 30, "Retirer", function() Q.RemoveSub() end)
+    g.remove:SetPoint("TOPLEFT", 412, -62)
+    -- Enlever tout le groupe de la barre (pour une sous-barre, avec ce qu'elle contient).
+    g.delete = Pill(g, 110, 30, "Supprimer", function(self)
+        if self.armed then
+            self.armed = nil
+            Q.RemoveSel()
+        else
+            self.armed = true
+            self.text:SetText("Sûr ?")
+            if C_Timer and C_Timer.After then
+                C_Timer.After(3, function() self.armed = nil self.text:SetText("Supprimer") end)
+            end
+        end
+    end)
+    g.delete:SetPoint("TOPLEFT", 502, -62)
+    g.help = Font(g, "GameFontHighlightSmall", "Lâche ici nourriture, potions, sorts ou macros (12 au plus). Touche une case puis « Retirer » pour l'enlever. « Supprimer » (deux appuis) enlève tout ce groupe de la barre.")
+    g.help:SetPoint("TOPLEFT", 0, -100)
+    g.help:SetWidth(600)
+    g.help:SetJustifyH("LEFT")
+    g:Hide()
+    s:EnableMouse(true)
+    s:SetScript("OnReceiveDrag", function() Q.Drop() end)
+    s:SetScript("OnMouseUp", function() if GetCursorInfo and GetCursorInfo() then Q.Drop() end end)
+end
+
+function Q.RefreshSettings(s)
+    if not s or not s.show then return end
+    local db = StreamingTouchDB or {}
+    local c = Q.Config()
+    s.show:Paint(not db.barreOff)
+    s.autoclose.text:SetText(c.autoclose == false and "Après un sort : la barre reste ouverte" or "Après un sort : la barre se ferme")
+    s.autoclose:Paint(c.autoclose ~= false)
+    s.hide:Paint(db.barreOff and true or false)
+    if not (s.name.HasFocus and s.name:HasFocus()) then s.name:SetText(c.name or "Barre") end
+    for i, b in ipairs(s.shapes) do b:Paint((c.shape or "ligne") == Q.SHAPES[i][1]) end
+    local right = (tonumber(c.dir) or -1) > 0
+    s.left:Paint(not right)
+    s.right:Paint(right)
+    s.size:SetText(math.floor((tonumber(c.scale) or 1) * 100 + .5) .. " %")
+    s.fade:SetText(math.floor(addon.Fondu() * 100 + .5) .. " %")
+    if Q.sel and not c.items[Q.sel] then Q.sel = nil end
+    for i, t in ipairs(s.tiles) do
+        ShowIcon(t, c.items[i])
+        t.sel:SetShown(Q.sel == i)
+    end
+    local item = Q.SelGroup()
+    local g = s.group
+    g:SetShown(item ~= nil)
+    s.help:SetShown(item == nil)
+    if not item then return end
+    local label = Q.Look(item)
+    g.title:SetText("Le groupe « " .. tostring(label) .. " » s'ouvre en :")
+    for i, b in ipairs(g.shapes) do b:Paint((item.shape or "ligne") == Q.SHAPES[i][1]) end
+    local mine = item.a == "LISTE"
+    g.nameLabel:SetShown(mine)
+    g.name:SetShown(mine)
+    g.remove:SetShown(mine)
+    g.help:SetShown(mine)
+    if mine and not (g.name.HasFocus and g.name:HasFocus()) then g.name:SetText(item.label or "Sous-barre") end
+    if Q.subSel and not (mine and item.items[Q.subSel]) then Q.subSel = nil end
+    for j, t in ipairs(g.tiles) do
+        t:SetShown(mine)
+        ShowIcon(t, mine and item.items[j] or nil)
+        t.sel:SetShown(Q.subSel == j)
+    end
+end
+
+local function HasPet()
+    for _, item in ipairs(Q.Config().items) do if item.a == "PETBAR" then return true end end
+end
+
+Q.events = CreateFrame("Frame")
+for _, event in ipairs({"PLAYER_LOGIN", "PLAYER_REGEN_ENABLED", "UI_SCALE_CHANGED", "DISPLAY_SIZE_CHANGED", "CVAR_UPDATE",
+    "SPELL_UPDATE_COOLDOWN", "SPELL_UPDATE_USABLE", "ACTIONBAR_UPDATE_STATE", "UPDATE_SHAPESHIFT_FORM",
+    "PLAYER_TARGET_CHANGED", "BAG_UPDATE", "BAG_UPDATE_COOLDOWN", "SPELLS_CHANGED", "PET_BAR_UPDATE", "UNIT_PET",
+    "START_AUTOREPEAT_SPELL", "STOP_AUTOREPEAT_SPELL"}) do
+    pcall(Q.events.RegisterEvent, Q.events, event)
+end
+if Q.events.RegisterUnitEvent then pcall(Q.events.RegisterUnitEvent, Q.events, "UNIT_AURA", "player") end
+Q.events:SetScript("OnEvent", function(_, event, name)
+    if event == "PLAYER_LOGIN" then
+        Q.Config()
+        if InCombatLockdown() then Q.pending = true return end
+        Q.Build()
+        Q.Layout()
+    elseif event == "PLAYER_REGEN_ENABLED" then
+        if not Q.frame then Q.Build() end
+        if Q.pending then Q.Layout() end
+    elseif event == "UI_SCALE_CHANGED" or event == "DISPLAY_SIZE_CHANGED" then
+        if Q.frame then Q.Layout() end
+    elseif event == "CVAR_UPDATE" then
+        if Q.handle and not InCombatLockdown() and (name == "ActionButtonUseKeyDown" or name == "ACTION_BUTTON_USE_KEY_DOWN") then
+            Q.handle:SetAttribute("keydown", GetCVarBool("ActionButtonUseKeyDown") and true or false)
+        end
+    elseif event == "SPELLS_CHANGED" and Q.frame and not InCombatLockdown() then
+        Q.Layout()
+    elseif (event == "PET_BAR_UPDATE" or event == "UNIT_PET") and Q.frame and HasPet() then
+        -- Familier appelé ou renvoyé : sa bulle se refait (après le combat s'il le faut).
+        Q.Layout()
+    else
+        Q.Update()
+    end
+end)
+Q.ticker = CreateFrame("Frame")
+Q.ticker:SetScript("OnUpdate", function(self, elapsed)
+    self.wait = (self.wait or 0) - (elapsed or 0)
+    if self.wait > 0 then return end
+    self.wait = .25
+    pcall(Q.UpdateRange)
+end)
+
+-- /stbarre : ouvre l'onglet « Barre » des réglages.
+SLASH_STREAMINGTOUCHBARRE1 = "/stbarre"
+SlashCmdList.STREAMINGTOUCHBARRE = function()
+    if addon.settings and addon.settings.Open then addon.settings.Open(6) end
+end
+end
 
 -- ==== CH : boutons du jeu (ancien Boutons.lua) ====
 -- Dans Radial.lua pour qu'un /reload suffise : WoW ne charge un nouveau fichier qu'au redémarrage du jeu.
@@ -4472,11 +5515,16 @@ function G.Build()
         {"Boutons", "Interface\\Icons\\Ability_Marksmanship"},
         {"Menu rond", "Interface\\Icons\\INV_Misc_Gem_Variety_01"},
         {"Sorts", "Interface\\Icons\\Spell_Nature_RavenForm"},
-        {"Chat", "Interface\\Icons\\INV_Letter_15"}}
+        {"Chat", "Interface\\Icons\\INV_Letter_15"},
+        {"Barre", "Interface\\Icons\\Ability_Hunter_AspectOfTheMonkey"}}
+    -- Onglets ajoutés par les autres fichiers (Cadres.lua : cadres et mini-carte).
+    for _, extra in ipairs(addon.extraTabs or {}) do tabs[#tabs + 1] = {extra.name, extra.icon} end
+    local visible = #tabs - 1
+    local tabW = math.floor((668 - (visible - 1) * 6) / visible)
     for i, t in ipairs(tabs) do
-        local b = Pill(p, 160, 38, t[1], function() G.Open(i) end, t[2])
+        local b = Pill(p, tabW, 38, t[1], function() G.Open(i) end, t[2])
         local shown = i == 1 and 0 or i - 2
-        b:SetPoint("TOPLEFT", 16 + shown * 168, -72)
+        b:SetPoint("TOPLEFT", 16 + shown * (tabW + 6), -72)
         b:SetShown(i ~= 2)
         p.tabs[i] = b
     end
@@ -4529,23 +5577,32 @@ function G.Build()
     end
     local function Line(y, title, label, field, after, note)
         Section(a, title, 0, y, 600)
-        local b = Pill(a, 300, 30, label, function() Toggle(field, after) end)
-        b:SetPoint("TOPLEFT", 0, y - 22)
+        local b = Pill(a, 300, 28, label, function() Toggle(field, after) end)
+        b:SetPoint("TOPLEFT", 0, y - 18)
         b.label, b.field = label, field
         local text = Font(a, "GameFontDisableSmall", note)
-        text:SetPoint("TOPLEFT", 312, y - 28)
+        text:SetPoint("TOPLEFT", 312, y - 22)
         text:SetWidth(290)
         text:SetJustifyH("LEFT")
         return b
     end
+    -- Les sorts de l'addon se refont avec le nouveau réglage (hors combat).
+    local function Respells()
+        for _, R in pairs(G.editors or {}) do
+            if R.Layout and not InCombatLockdown() then pcall(R.Layout) end
+        end
+        if addon.barre and addon.barre.Layout and not InCombatLockdown() then pcall(addon.barre.Layout) end
+    end
     a.toggles = {
         Line(0, "Joystick de déplacement", "Pas de côté", "strafeOff", addon.ApplyKeys,
             "Gauche et droite décalent ton personnage au lieu de le faire tourner."),
-        Line(-62, "Cadavre", "Target maintenu", "corpseOff", addon.ApplyKeys,
+        Line(-50, "Cadavre", "Target maintenu", "corpseOff", addon.ApplyKeys,
             "Maintenir Target dans l'appli vise le cadavre à fouiller devant toi."),
-        Line(-124, "Chat", "Saisie au-dessus du clavier", "chatRaiseOff", nil,
+        Line(-100, "Sorts offensifs", "Ciblage auto", "autoTargetOff", Respells,
+            "Sans cible ennemie, le sort prend l'ennemi le plus proche devant toi et part."),
+        Line(-150, "Chat", "Saisie au-dessus du clavier", "chatRaiseOff", nil,
             "Quand tu écris, la ligne du chat monte en haut de l'écran."),
-        Line(-186, "Mini-carte", "Bouton de la mini-carte", "minimapOff", addon.ShowMinimapButton,
+        Line(-200, "Mini-carte", "Bouton de la mini-carte", "minimapOff", addon.ShowMinimapButton,
             "Sinon, /stouch ouvre aussi ces réglages."),
     }
     -- Barres du jeu : cachées au choix (l'arc de sorts et le menu rond les remplacent).
@@ -5072,6 +6129,12 @@ function G.Build()
         db.bigRows = math.min(24, (db.bigRows or addon.BIG_ROWS or 14) + 1)
         Chat()
     end)
+    if addon.barre then addon.barre.BuildSettings(p.pages[6], G) end
+    for k, extra in ipairs(addon.extraTabs or {}) do
+        local page = p.pages[6 + k]
+        page.tabIndex = 6 + k
+        pcall(extra.build, page, G)
+    end
 end
 
 function G.Refresh()
@@ -5183,6 +6246,8 @@ function G.Refresh()
     c.font:SetText(size and tostring(math.floor(size + .5)) or "-")
     local alpha = G.chatAlpha or (GetChatWindowInfo and select(6, GetChatWindowInfo(1)))
     c.alpha:SetText(alpha and Percent(alpha) or "-")
+    if addon.barre then addon.barre.RefreshSettings(p.pages[6]) end
+    for k, extra in ipairs(addon.extraTabs or {}) do pcall(extra.refresh, p.pages[6 + k]) end
 end
 
 function G.Open(tab)

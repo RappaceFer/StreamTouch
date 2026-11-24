@@ -91,7 +91,7 @@ Ensuite : Tailscale activé, StreamTouch, touche le PC.
 
 ## 6. Dans World of Warcraft : l'addon Streaming Touch
 
-1. Télécharge `StreamingTouch-2.5.0.zip` dans **Releases**.
+1. Télécharge `StreamingTouch-2.7.0.zip` dans **Releases**.
 2. Dézippe-le dans `World of Warcraft\_forever_\Interface\AddOns` : tu dois obtenir `AddOns\StreamingTouch`.
 3. Lance le jeu. L'addon arrive **déjà réglé** : arc de sorts autour du joystick caméra, avec les sorts conseillés de ta classe,
    menu rond, chat placé au-dessus du clavier du téléphone. Réglages : bouton de la mini-carte ou `/stouch`.

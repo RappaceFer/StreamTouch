@@ -88,7 +88,7 @@ Then: Tailscale on, StreamTouch, tap the PC.
 
 ## 6. In World of Warcraft: the Streaming Touch addon
 
-1. Download `StreamingTouch-2.5.0.zip` from **Releases**.
+1. Download `StreamingTouch-2.7.0.zip` from **Releases**.
 2. Unzip it into `World of Warcraft\_forever_\Interface\AddOns`: you should get `AddOns\StreamingTouch`.
 3. Start the game. The addon comes **already set up**: spell arc around the camera stick with the suggested spells of your
    class, round menu, chat above the phone keyboard. Settings: minimap button or `/stouch`.
