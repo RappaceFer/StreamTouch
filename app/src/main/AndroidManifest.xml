@@ -108,6 +108,23 @@
             </intent-filter>
         </activity>
         <!-- Small hack to support launcher shortcuts without relaunching over and over again when the back button is pressed -->
+        <!-- StreamTouch : l'icône « WoW », cachée jusqu'au premier « Créer un raccourci » sur une appli du PC. -->
+        <activity
+            android:name=".LanceurWoW"
+            android:label="WoW"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher"
+            android:enabled="false"
+            android:exported="true"
+            android:noHistory="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
         <activity
             android:name=".ShortcutTrampoline"
             android:noHistory="true"

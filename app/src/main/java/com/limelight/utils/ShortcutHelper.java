@@ -145,27 +145,13 @@ public class ShortcutHelper {
         return computer.uuid + app.getAppId();
     }
 
-    @TargetApi(Build.VERSION_CODES.O)
+    /** StreamTouch : au lieu d'un raccourci épinglé (que l'écran d'accueil entoure d'un rond blanc), fait
+     *  apparaître une vraie icône d'appli « WoW » dans la liste des applis, qui lance cette appli du PC. */
     public boolean createPinnedGameShortcut(ComputerDetails computer, NvApp app, Bitmap iconBits) {
-        if (sm.isRequestPinShortcutSupported()) {
-            Icon appIcon;
-
-            if (iconBits != null) {
-                appIcon = Icon.createWithAdaptiveBitmap(iconBits);
-            } else {
-                appIcon = Icon.createWithResource(context, R.mipmap.ic_pc_scut);
-            }
-
-            ShortcutInfo sInfo = new ShortcutInfo.Builder(context, getShortcutIdForGame(computer, app))
-                .setIntent(ServerHelper.createAppShortcutIntent(context, computer, app))
-                .setShortLabel(app.getAppName() + " (" + computer.name + ")")
-                .setIcon(appIcon)
-                .build();
-
-            return sm.requestPinShortcut(sInfo, null);
-        } else {
-            return false;
-        }
+        com.limelight.LanceurWoW.activer(context, computer.uuid, computer.name, app.getAppName(),
+                "" + app.getAppId(), app.isHdrSupported());
+        android.widget.Toast.makeText(context, R.string.st_lanceur_wow_pret, android.widget.Toast.LENGTH_LONG).show();
+        return true;
     }
 
     public void disableComputerShortcut(ComputerDetails computer, CharSequence reason) {

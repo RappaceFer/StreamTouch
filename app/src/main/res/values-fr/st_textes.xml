@@ -127,4 +127,5 @@
     <string name="st_r_aide_clavier">"  (maintenir : ouvre le menu, utile si Menu est caché)"</string>
     <string name="st_r_exporter">📤 Exporter mes réglages</string>
     <string name="st_r_exporte">Réglages enregistrés dans Téléchargements : StreamTouch-reglages.json</string>
+    <string name="st_lanceur_wow_pret">Icône « WoW » ajoutée à la liste des applis : appui long dessus pour la poser sur l\'écran d\'accueil.</string>
 </resources>

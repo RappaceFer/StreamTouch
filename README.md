@@ -1,7 +1,7 @@
 # StreamTouch
 
 **Play World of Warcraft on your Android phone, streamed from your PC, with touch controls made for it.**
-Made in Rappace · version 1.1.1 · [Français plus bas](#français)
+Made in Rappace · version 1.1.2 · [Français plus bas](#français)
 
 **New here? Read the [step-by-step guide](GUIDE.md)**: Sunshine on the PC, StreamTouch on the phone, Tailscale to play away
 from home, the Magic Packet to turn the PC on remotely, and the WoW addon.
@@ -55,9 +55,22 @@ with the WoW addon **Streaming Touch 2.7.1**, which adds the spell ring and on-s
 
 ## Install
 
-1. Download `StreamTouch-1.1.1.apk` from the **Releases** page and install it.
+1. Download `StreamTouch-1.1.2.apk` from the **Releases** page and install it.
 2. Open StreamTouch, add your PC and pair it with Sunshine, like any Moonlight client.
 3. Start a stream: the touch controls appear over the game. Open the round menu (Menu button, or hold Keyboard) for the guide and settings.
+
+### Optional: start WoW automatically (character screen)
+
+Add an app named **WoW** in Sunshine (Web UI → Applications → Add), with this **Command**:
+
+```
+powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "C:\path\to\sunshine\lancer_wow.ps1"
+```
+
+and **Auto-detach** turned off. The script [`sunshine/lancer_wow.ps1`](sunshine/lancer_wow.ps1) asks Battle.net to start
+WoW: Forever (Battle.net logs you in up to the character screen), waits for Battle.net if it was closed, never opens a second
+WoW, and ends the session when you close the game. In StreamTouch, long press **WoW** → "Create shortcut" to get a
+"WoW" icon in your app list. For a PC that starts without a password, see Windows "netplwiz".
 
 ### Optional: Rappace's WoW interface layout
 
@@ -144,8 +157,15 @@ jouer hors de chez toi, le Magic Packet pour allumer le PC à distance, et l'add
 
 Captures d'écran : voir plus haut (dossier `captures/`).
 
-**Installer :** télécharge `StreamTouch-1.1.1.apk` dans **Releases**, installe-le, ajoute ton PC et associe-le à Sunshine,
+**Installer :** télécharge `StreamTouch-1.1.2.apk` dans **Releases**, installe-le, ajoute ton PC et associe-le à Sunshine,
 puis lance un stream. Le menu rond (bouton Menu, ou maintenir Clavier) donne le guide et les réglages.
+
+**Lancer WoW tout seul (écran des personnages, facultatif) :** dans Sunshine, ajoute une appli **WoW** avec la commande
+`powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "C:\chemin\vers\sunshine\lancer_wow.ps1"`
+et « Auto-detach » désactivé. Le script [`sunshine/lancer_wow.ps1`](sunshine/lancer_wow.ps1) fait lancer WoW: Forever par
+Battle.net (connexion jusqu'à l'écran des personnages), attend Battle.net s'il était fermé, n'ouvre jamais un deuxième WoW et
+termine la session quand tu fermes le jeu. Dans StreamTouch, appui long sur **WoW** → « Créer un raccourci » : une icône
+« WoW » apparaît dans la liste des applis.
 
 **Disposition d'interface WoW (facultatif) :** le fichier [`reglages-wow/disposition-mode-edition.txt`](reglages-wow/disposition-mode-edition.txt)
 contient la disposition du Mode Édition (barres, cadres, mini-carte) utilisée avec StreamTouch. Copie tout le texte, puis dans WoW :

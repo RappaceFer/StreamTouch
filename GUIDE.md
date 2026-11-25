@@ -32,7 +32,7 @@ The "Desktop" app is enough: start WoW from the desktop while streaming.
 
 ## 2. On the phone: StreamTouch
 
-1. Download `StreamTouch-1.1.1.apk` from **Releases**: https://github.com/RappaceFer/StreamTouch/releases
+1. Download `StreamTouch-1.1.2.apk` from **Releases**: https://github.com/RappaceFer/StreamTouch/releases
 2. Install it (Android asks you to allow installs from your browser or file manager).
 3. The app comes **already set up** with Rappace's settings: button layout, sizes, opacity, touch mode at start.
    Change anything later in the round menu (Menu button, or hold Keyboard) > Settings.

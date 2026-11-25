@@ -127,4 +127,5 @@
     <string name="st_r_aide_clavier">"  (hold: opens the menu, handy if Menu is hidden)"</string>
     <string name="st_r_exporter">📤 Export my settings</string>
     <string name="st_r_exporte">Settings saved in Downloads: StreamTouch-reglages.json</string>
+    <string name="st_lanceur_wow_pret">WoW icon added to your app list: long press it there to place it on your home screen.</string>
 </resources>
