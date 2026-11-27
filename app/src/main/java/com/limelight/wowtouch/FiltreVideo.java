@@ -36,24 +36,64 @@ public final class FiltreVideo {
     private static final String TAG = "StreamTouchFiltre";
     private static final String CLE = "touch_filtre";
 
-    /** Les ambiances : {vibrance, saturation, contraste, luminosité, gamma, chaleur, netteté, vignette, anti-bandes}. */
+    /**
+     * Les ambiances : {vibrance, saturation, contraste, luminosité, gamma, chaleur, netteté, vignette, anti-bandes,
+     * lignes rétro, contours dessinés}. PERSO prend ses valeurs dans les réglages du joueur.
+     */
     public enum Ambiance {
-        AUCUN("aucun", 0f, 1f, 1f, 0f, 1f, 0f, 0f, 0f, 0f),
-        CINEMA("cinema", .3f, 1f, 1.08f, .01f, .95f, .25f, .45f, .22f, 1f),
-        ECLATANT("eclatant", .55f, 1.08f, 1.06f, .01f, .96f, .06f, .55f, 0f, 1f),
-        NET("net", .5f, 1.08f, 1.06f, .015f, .92f, .05f, 1f, 0f, 1f);
+        AUCUN("aucun", "Aucun", "None", 0f, 1f, 1f, 0f, 1f, 0f, 0f, 0f, 0f, 0f, 0f),
+        NET("net", "Net", "Sharp", .5f, 1.08f, 1.06f, .015f, .92f, .05f, 1f, 0f, 1f, 0f, 0f),
+        ECLATANT("eclatant", "Éclatant", "Vivid", .55f, 1.08f, 1.06f, .01f, .96f, .06f, .55f, 0f, 1f, 0f, 0f),
+        CINEMA("cinema", "Cinéma", "Cinema", .3f, 1f, 1.08f, .01f, .95f, .25f, .45f, .22f, 1f, 0f, 0f),
+        COMPETITIF("competitif", "Compétitif", "Competitive", .25f, 1.04f, 1.12f, .03f, .82f, 0f, .85f, 0f, 1f, 0f, 0f),
+        NETTETE("nettete", "Netteté pure", "Pure sharp", 0f, 1f, 1f, 0f, 1f, 0f, 1f, 0f, 1f, 0f, 0f),
+        FILMIQUE("filmique", "Filmique", "Filmic", .1f, .9f, 1.05f, -.005f, 1.04f, .35f, .3f, .3f, 1f, 0f, 0f),
+        ARCADE("arcade", "Arcade", "Arcade", .75f, 1.2f, 1.15f, .02f, .95f, .05f, .6f, 0f, 1f, 0f, 0f),
+        RETRO("retro", "Rétro CRT", "Retro CRT", .3f, 1.05f, 1.1f, .03f, .95f, .1f, .3f, .35f, 0f, 1f, 0f),
+        DESSIN("dessin", "Dessin animé", "Cartoon", .5f, 1.15f, 1.1f, .02f, .95f, 0f, .3f, 0f, 1f, 0f, 1f),
+        PERSO("perso", "Personnalisé", "Custom", .5f, 1.08f, 1.06f, .015f, .92f, .05f, 1f, 0f, 1f, 0f, 0f);
 
-        final String cle;
+        final String cle, fr, en;
         final float[] reglages;
-        Ambiance(String cle, float... reglages) { this.cle = cle; this.reglages = reglages; }
+        Ambiance(String cle, String fr, String en, float... reglages) { this.cle = cle; this.fr = fr; this.en = en; this.reglages = reglages; }
 
         public Ambiance suivante() { return values()[(ordinal() + 1) % values().length]; }
+
+        public String nom(Context c) {
+            return Traduction.texte(c, fr, en);
+        }
 
         static Ambiance de(String cle) {
             for (Ambiance a : values()) if (a.cle.equals(cle)) return a;
             return AUCUN;
         }
     }
+
+    private static final String CLE_PERSO = "touch_filtre_perso";
+
+    /** Les valeurs du réglage personnalisé (11 nombres), ou celles de « Net » au départ. */
+    public static float[] perso(Context c) {
+        String s = PreferenceManager.getDefaultSharedPreferences(c).getString(CLE_PERSO, null);
+        float[] v = Ambiance.NET.reglages.clone();
+        if (s != null) {
+            String[] morceaux = s.split(",");
+            for (int i = 0; i < Math.min(v.length, morceaux.length); i++) {
+                try { v[i] = Float.parseFloat(morceaux[i]); } catch (NumberFormatException ignore) {}
+            }
+        }
+        return v;
+    }
+
+    /** Enregistre le réglage personnalisé (null = repartir de « Net ») et l'applique s'il est affiché. */
+    public static void reglerPerso(Context c, float[] v) {
+        StringBuilder s = new StringBuilder();
+        if (v != null) for (int i = 0; i < v.length; i++) s.append(i == 0 ? "" : ",").append(v[i]);
+        PreferenceManager.getDefaultSharedPreferences(c).edit().putString(CLE_PERSO, v == null ? null : s.toString()).apply();
+        FiltreVideo f = actif;
+        if (f != null && ambiance(c) == Ambiance.PERSO) f.reglages = perso(c);
+    }
+
+    static float[] valeurs(Context c, Ambiance a) { return a == Ambiance.PERSO ? perso(c) : a.reglages; }
 
     private static volatile FiltreVideo actif;
 
@@ -66,7 +106,7 @@ public final class FiltreVideo {
         PreferenceManager.getDefaultSharedPreferences(c).edit().putString(CLE, a.cle).apply();
         FiltreVideo f = actif;
         if (f == null) return a == Ambiance.AUCUN;
-        f.reglages = a.reglages;
+        f.reglages = valeurs(c, a);
         return true;
     }
 
@@ -80,7 +120,7 @@ public final class FiltreVideo {
         if ((a == Ambiance.AUCUN && !agrandir) || ecran == null || !ecran.isValid() || largeur <= 0 || hauteur <= 0) {
             return null;
         }
-        FiltreVideo f = new FiltreVideo(a.reglages, largeur, hauteur);
+        FiltreVideo f = new FiltreVideo(valeurs(c, a), largeur, hauteur);
         if (!f.lancer(ecran)) {
             f.arreter();
             return null;
@@ -96,7 +136,7 @@ public final class FiltreVideo {
     public static FiltreVideo sansEcran(Context c, int largeur, int hauteur) {
         Ambiance a = ambiance(c);
         if (a == Ambiance.AUCUN || largeur <= 0 || hauteur <= 0) return null;
-        FiltreVideo f = new FiltreVideo(a.reglages, largeur, hauteur);
+        FiltreVideo f = new FiltreVideo(valeurs(c, a), largeur, hauteur);
         if (!f.lancer(null)) {
             f.arreter();
             return null;
@@ -140,7 +180,7 @@ public final class FiltreVideo {
             "#endif\n" +
             "uniform samplerExternalOES uImage;\n" +
             "uniform vec2 uPas;\n" +
-            "uniform float uVibrance, uSaturation, uContraste, uLumiere, uGamma, uChaleur, uNettete, uVignette, uLissage;\n" +
+            "uniform float uVibrance, uSaturation, uContraste, uLumiere, uGamma, uChaleur, uNettete, uVignette, uLissage, uLignes, uContours;\n" +
             "varying vec2 vUv;\n" +
             "const vec3 LUMA = vec3(0.2126, 0.7152, 0.0722);\n" +
             "float hasard(vec2 p) {\n" +
@@ -175,6 +215,15 @@ public final class FiltreVideo {
             "    vec3 poids = -amp * (0.125 + 0.075 * uNettete) * uNettete * (1.0 - plat);\n" +
             "    c = clamp((c + (n + s + e + o) * poids) / (1.0 + 4.0 * poids), 0.0, 1.0);\n" +
             "  }\n" +
+            "  if (uContours > 0.0) {\n" +
+            "    float ln = dot(texture2D(uImage, vUv + vec2(0.0, uPas.y)).rgb, LUMA);\n" +
+            "    float ls = dot(texture2D(uImage, vUv - vec2(0.0, uPas.y)).rgb, LUMA);\n" +
+            "    float le = dot(texture2D(uImage, vUv + vec2(uPas.x, 0.0)).rgb, LUMA);\n" +
+            "    float lo = dot(texture2D(uImage, vUv - vec2(uPas.x, 0.0)).rgb, LUMA);\n" +
+            "    float bord = smoothstep(0.06, 0.2, length(vec2(le - lo, ln - ls)));\n" +
+            "    c = mix(c, floor(c * 5.0 + 0.5) / 5.0, 0.55 * uContours);\n" +
+            "    c *= 1.0 - 0.85 * bord * uContours;\n" +
+            "  }\n" +
             "  c = (c - 0.35) * uContraste + 0.35 + uLumiere;\n" +
             "  c = pow(clamp(c, 0.0, 1.0), vec3(uGamma));\n" +
             "  c *= vec3(1.0 + 0.08 * uChaleur, 1.0 + 0.015 * uChaleur, 1.0 - 0.08 * uChaleur);\n" +
@@ -185,6 +234,14 @@ public final class FiltreVideo {
             "  c = mix(vec3(l), c, 1.0 + uVibrance * (1.0 - sat));\n" +
             "  vec2 d = vUv - 0.5;\n" +
             "  c *= 1.0 - uVignette * dot(d, d) * 1.4;\n" +
+            "  if (uLignes > 0.0) {\n" +
+            "    float ligne = 0.5 + 0.5 * cos(gl_FragCoord.y * 3.14159265);\n" +
+            "    c *= 1.0 - 0.3 * uLignes * ligne;\n" +
+            "    float m = mod(gl_FragCoord.x, 3.0);\n" +
+            "    vec3 masque = m < 1.0 ? vec3(1.0, 0.9, 0.9) : (m < 2.0 ? vec3(0.9, 1.0, 0.9) : vec3(0.9, 0.9, 1.0));\n" +
+            "    c *= mix(vec3(1.0), masque, uLignes);\n" +
+            "    c *= 1.0 + 0.12 * uLignes;\n" +
+            "  }\n" +
             "  c += (hasard(gl_FragCoord.xy + vec2(17.0, 41.0)) - 0.5) * (1.5 / 255.0) * uLissage;\n" +
             "  gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);\n" +
             "}\n";
@@ -287,7 +344,7 @@ public final class FiltreVideo {
     private SurfaceTexture texture;
     private Surface entree;
     private int programme, idTexture, aPos, aTex, uTexMat, uPas;
-    private final int[] uReglages = new int[9];
+    private final int[] uReglages = new int[11];
     // Super Résolution : programme (0 = indisponible), image intermédiaire à la taille du stream.
     private int programmeSR, aPosSR, aTexSR, uInfosSR, uTranchantSR, uEntreeSR, tampon, imageTampon;
     private volatile String etatSR;
@@ -408,7 +465,7 @@ public final class FiltreVideo {
         uTexMat = GLES20.glGetUniformLocation(programme, "uTexMat");
         uPas = GLES20.glGetUniformLocation(programme, "uPas");
         String[] noms = {"uVibrance", "uSaturation", "uContraste", "uLumiere", "uGamma", "uChaleur", "uNettete",
-                "uVignette", "uLissage"};
+                "uVignette", "uLissage", "uLignes", "uContours"};
         for (int i = 0; i < noms.length; i++) uReglages[i] = GLES20.glGetUniformLocation(programme, noms[i]);
         sommets = ByteBuffer.allocateDirect(CARRE.length * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         sommets.put(CARRE).position(0);

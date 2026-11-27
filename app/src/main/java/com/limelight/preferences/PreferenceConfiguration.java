@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.view.Display;
+import android.view.WindowManager;
 
 import com.limelight.nvstream.jni.MoonBridge;
 
@@ -69,7 +70,9 @@ public class PreferenceConfiguration {
     private static final String GAMEPAD_MOTION_SENSORS_PREF_STRING = "checkbox_gamepad_motion_sensors";
     private static final String GAMEPAD_MOTION_FALLBACK_PREF_STRING = "checkbox_gamepad_motion_fallback";
 
-    static final String DEFAULT_RESOLUTION = "1280x720";
+    // StreamTouch: "auto" = the exact size of the screen of the device in use, checked at each connection.
+    static final String DEFAULT_RESOLUTION = "auto";
+    public static final String RES_AUTO = "auto";
     static final String DEFAULT_FPS = "60";
     private static final boolean DEFAULT_STRETCH = false;
     private static final boolean DEFAULT_SOPS = true;
@@ -86,7 +89,7 @@ public class PreferenceConfiguration {
     private static final boolean ONLY_L3_R3_DEFAULT = false;
     private static final boolean SHOW_GUIDE_BUTTON_DEFAULT = true;
     private static final boolean DEFAULT_ENABLE_HDR = false;
-    private static final boolean DEFAULT_ENABLE_PIP = false;
+    private static final boolean DEFAULT_ENABLE_PIP = true;
     private static final boolean DEFAULT_ENABLE_PERF_OVERLAY = false;
     private static final boolean DEFAULT_BIND_ALL_USB = false;
     private static final boolean DEFAULT_MOUSE_EMULATION = true;
@@ -236,11 +239,50 @@ public class PreferenceConfiguration {
         }
     }
 
+    private static volatile String lastAutoResolution = "1920x1080";
+
+    /**
+     * StreamTouch: the full size of this device's screen, landscape, in even pixels (the whole panel,
+     * like the "Native full screen" choice). Phones, tablets and foldables each stream at their own size.
+     */
+    public static String autoResolution(Context context) {
+        int w = 0, h = 0;
+        try {
+            WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+            Display display = wm.getDefaultDisplay();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                w = display.getMode().getPhysicalWidth();
+                h = display.getMode().getPhysicalHeight();
+            }
+            if (w <= 0 || h <= 0) {
+                android.graphics.Point size = new android.graphics.Point();
+                display.getRealSize(size);
+                w = size.x;
+                h = size.y;
+            }
+        } catch (Exception e) {
+            return lastAutoResolution;
+        }
+        if (w <= 0 || h <= 0) {
+            return lastAutoResolution;
+        }
+        int longSide = Math.max(w, h) & ~1, shortSide = Math.min(w, h) & ~1;
+        lastAutoResolution = longSide + "x" + shortSide;
+        return lastAutoResolution;
+    }
+
+    /** "auto" becomes this screen's size; any other value is kept as is. */
+    public static String resolveResolution(Context context, String resString) {
+        return RES_AUTO.equals(resString) ? autoResolution(context) : resString;
+    }
+
     private static int getWidthFromResolutionString(String resString) {
+        if (RES_AUTO.equals(resString)) resString = lastAutoResolution;
         return Integer.parseInt(resString.split("x")[0]);
     }
 
     private static int getHeightFromResolutionString(String resString) {
+        if (RES_AUTO.equals(resString)) resString = lastAutoResolution;
         return Integer.parseInt(resString.split("x")[1]);
     }
 
@@ -348,7 +390,7 @@ public class PreferenceConfiguration {
     public static int getDefaultBitrate(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         return getDefaultBitrate(
-                prefs.getString(RESOLUTION_PREF_STRING, DEFAULT_RESOLUTION),
+                resolveResolution(context, prefs.getString(RESOLUTION_PREF_STRING, DEFAULT_RESOLUTION)),
                 prefs.getString(FPS_PREF_STRING, DEFAULT_FPS));
     }
 
@@ -520,7 +562,7 @@ public class PreferenceConfiguration {
         }
         else {
             // Use the new preference location
-            String resStr = prefs.getString(RESOLUTION_PREF_STRING, PreferenceConfiguration.DEFAULT_RESOLUTION);
+            String resStr = resolveResolution(context, prefs.getString(RESOLUTION_PREF_STRING, PreferenceConfiguration.DEFAULT_RESOLUTION));
 
             // Convert legacy resolution strings to the new style
             if (!resStr.contains("x")) {
@@ -588,6 +630,10 @@ public class PreferenceConfiguration {
         config.onlyL3R3 = prefs.getBoolean(ONLY_L3_R3_PREF_STRING, ONLY_L3_R3_DEFAULT);
         config.showGuideButton = prefs.getBoolean(SHOW_GUIDE_BUTTON_PREF_STRING, SHOW_GUIDE_BUTTON_DEFAULT);
         config.enableHdr = prefs.getBoolean(ENABLE_HDR_PREF_STRING, DEFAULT_ENABLE_HDR) && !isShieldAtvFirmwareWithBrokenHdr();
+        // StreamTouch 1.1.4 : petite fenêtre activée une fois pour toutes (le joueur peut la couper ensuite)
+        if (!prefs.getBoolean("st_pip_v1", false)) {
+            prefs.edit().putBoolean(ENABLE_PIP_PREF_STRING, true).putBoolean("st_pip_v1", true).apply();
+        }
         config.enablePip = prefs.getBoolean(ENABLE_PIP_PREF_STRING, DEFAULT_ENABLE_PIP);
         config.enablePerfOverlay = prefs.getBoolean(ENABLE_PERF_OVERLAY_STRING, DEFAULT_ENABLE_PERF_OVERLAY);
         config.bindAllUsb = prefs.getBoolean(BIND_ALL_USB_STRING, DEFAULT_BIND_ALL_USB);

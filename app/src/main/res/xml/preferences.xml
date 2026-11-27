@@ -6,6 +6,9 @@
         <CheckBoxPreference android:key="wow_touch_enabled" android:defaultValue="true"
             android:title="@string/st_p_titre"
             android:summary="@string/st_p_resume" />
+        <CheckBoxPreference android:key="checkbox_enable_pip" android:defaultValue="true"
+            android:title="@string/st_p_pip_titre"
+            android:summary="@string/st_p_pip_resume" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/category_basic_settings"
@@ -16,7 +19,7 @@
             android:summary="@string/summary_resolution_list"
             android:entries="@array/resolution_names"
             android:entryValues="@array/resolution_values"
-            android:defaultValue="1280x720" />
+            android:defaultValue="auto" />
         <ListPreference
             android:key="list_fps"
             android:title="@string/title_fps_list"
@@ -213,11 +216,6 @@
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/category_ui_settings"
         android:key="category_ui_settings">
-        <CheckBoxPreference
-            android:key="checkbox_enable_pip"
-            android:title="@string/title_checkbox_enable_pip"
-            android:summary="@string/summary_checkbox_enable_pip"
-            android:defaultValue="false" />
         <com.limelight.preferences.LanguagePreference
             android:key="list_languages"
             android:title="@string/title_language_list"

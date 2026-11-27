@@ -37,6 +37,9 @@ final class PcKeyboardOverlay implements Clavier {
         board=new LinearLayout(activite);
         board.setOrientation(LinearLayout.VERTICAL);
         board.setPadding(dp(5), dp(3), dp(5), dp(4));
+        // Le clavier garde pour lui chaque toucher (même entre deux touches) : rien ne passe au jeu en dessous.
+        board.setClickable(true);
+        board.setOnTouchListener((v,e)->true);
         mapKeys();
         rebuild();
     }
@@ -72,9 +75,9 @@ final class PcKeyboardOverlay implements Clavier {
 
     private GradientDrawable bg(int color, int alpha, int border) {
         GradientDrawable g=new GradientDrawable();
-        g.setColor((color & 0xFFFFFF) | (Math.min(255,Math.max(0,alpha))<<24));
+        g.setColor((Parure.t(color|0xFF000000) & 0xFFFFFF) | (Math.min(255,Math.max(0,alpha))<<24));
         g.setCornerRadius(dp(5));
-        g.setStroke(dp(0.65f),border);
+        g.setStroke(dp(0.65f),Parure.t(border));
         return g;
     }
     private TextView text(String label, int size, boolean bold) {
@@ -144,7 +147,45 @@ final class PcKeyboardOverlay implements Clavier {
         else {latched.add(mod);remote.injectKeyPress(mod);}
         refreshLabels();
     }
-    private void addKey(LinearLayout row,String label) {
+    private LinearLayout rangee() {
+        LinearLayout row=new LinearLayout(activite); row.setOrientation(LinearLayout.HORIZONTAL);
+        board.addView(row,new LinearLayout.LayoutParams(-1,-2));
+        return row;
+    }
+    private void addKey(LinearLayout row,String label) { addKey(row,label,mapping.get(label)); }
+
+    /**
+     * Touche de caractère : ce qui est écrit dessus est ce qui arrive dans le jeu, quelle que soit la langue du clavier
+     * Windows. Lettres A-Z et chiffres : la touche du PC (marche aussi pour les raccourcis du jeu). Accents et signes :
+     * envoyés comme texte, donc exactement le caractère affiché.
+     */
+    private void addChar(LinearLayout row,String label,TouchKey position) {
+        char ch=label.length()==1?label.charAt(0):0;
+        if(ch>='A'&&ch<='Z'||ch>='0'&&ch<='9'){ addKey(row,label,fromVk(ch)); return; }
+        int vk=position.wireCode&0xFF;
+        if(vk>=0x30&&vk<=0x39){ addKey(row,label,position); return; } // AZERTY : & é " … gardent la touche 1 à 0 (barres d'action)
+        addKey(row,label,null);
+        View t=row.getChildAt(row.getChildCount()-1);
+        t.setOnTouchListener((v,event)->{
+            int action=event.getActionMasked();
+            if(action==MotionEvent.ACTION_DOWN){ v.setAlpha(.65f); return true; }
+            if(action==MotionEvent.ACTION_UP){
+                boolean maj=latched.contains(TouchKey.KEY_SHIFT_L);
+                String haut=label.toUpperCase(java.util.Locale.ROOT), bas=label.toLowerCase(java.util.Locale.ROOT);
+                if(maj && haut.equals(bas)){
+                    // Maj + signe (? ! + …) : la touche du PC avec Maj, comme un vrai clavier.
+                    remote.injectKeyPress(position); remote.injectKeyRelease(position);
+                } else {
+                    if(maj) { remote.injectKeyRelease(TouchKey.KEY_SHIFT_L); latched.remove(TouchKey.KEY_SHIFT_L); }
+                    remote.injectText(maj?haut:bas);
+                }
+                releaseModifiers();
+            }
+            if(action==MotionEvent.ACTION_UP||action==MotionEvent.ACTION_CANCEL) v.setAlpha(1f);
+            return true;
+        });
+    }
+    private void addKey(LinearLayout row,String label,TouchKey toucheFixe) {
         TextView t=text(label,label.startsWith("F")&&label.length()>1?8:10,false);
         int alpha=Math.max(18,Math.min(255,Math.round(255*opacity/100f)));
         t.setBackground(bg(0x3A2616,alpha,0xB0C9A15A));
@@ -152,7 +193,7 @@ final class PcKeyboardOverlay implements Clavier {
         p.setMargins(dp(1.5f),dp(1.5f),dp(1.5f),dp(1.5f));
         row.addView(t,p);
         TouchKey mod=modifier(label);
-        TouchKey key=mapping.get(label);
+        TouchKey key=toucheFixe;
         t.setOnTouchListener((v,event)->{
             int action=event.getActionMasked();
             if(action==MotionEvent.ACTION_DOWN) {
@@ -178,7 +219,7 @@ final class PcKeyboardOverlay implements Clavier {
         board.setBackground(bg(0x1A100A,bgAlpha,0xB0D9A84A));
         LinearLayout head=new LinearLayout(activite);
         head.setOrientation(LinearLayout.HORIZONTAL);
-        TextView drag=text("☰  CH-FR  QWERTZ   •   "+activite.getString(R.string.st_s_glisser),10,true);
+        TextView drag=text("☰  "+Disposition.actuelle(activite).titre+"   •   "+activite.getString(R.string.st_s_glisser),10,true);
         drag.setBackground(bg(0x4A3018,Math.max(32,opacity*2),0x99D9A84A));
         head.addView(drag,new LinearLayout.LayoutParams(0,dp(27*scale),1));
         drag.setOnTouchListener((v,e)->{
@@ -222,11 +263,26 @@ final class PcKeyboardOverlay implements Clavier {
         head.addView(close,new LinearLayout.LayoutParams(dp(31*scale),dp(27*scale)));
         close.setOnClickListener(v->hide());
         board.addView(head,new LinearLayout.LayoutParams(-1,-2));
-        for(String[] labels:keys()){
-            LinearLayout row=new LinearLayout(activite); row.setOrientation(LinearLayout.HORIZONTAL);
-            for(String label:labels)addKey(row,label);
-            board.addView(row,new LinearLayout.LayoutParams(-1,-2));
-        }
+        // Rangées de caractères : étiquettes de la disposition choisie, positions PC fixes.
+        Disposition d=Disposition.actuelle(activite);
+        LinearLayout f=rangee();
+        for(String label:new String[]{"Esc","F1","F2","F3","F4","F5","F6","F7","F8","F9","F10"})addKey(f,label);
+        LinearLayout r1=rangee();
+        for(int i=0;i<d.chiffres.length;i++)addChar(r1,d.chiffres[i],Disposition.CHIFFRES[i]);
+        addKey(r1,"⌫");
+        LinearLayout r2=rangee();
+        addKey(r2,"Tab");
+        for(int i=0;i<d.rangeeQ.length;i++)addChar(r2,d.rangeeQ[i],Disposition.RANGEE_Q[i]);
+        LinearLayout r3=rangee();
+        addKey(r3,"Caps");
+        for(int i=0;i<d.rangeeA.length;i++)addChar(r3,d.rangeeA[i],Disposition.RANGEE_A[i]);
+        addKey(r3,"↵");
+        LinearLayout r4=rangee();
+        addKey(r4,"⇧");
+        for(int i=0;i<d.rangeeZ.length;i++)addChar(r4,d.rangeeZ[i],Disposition.RANGEE_Z[i]);
+        addKey(r4,"⇧");
+        LinearLayout r5=rangee();
+        for(String label:new String[]{"Ctrl","Win","Alt","Espace","AltGr","←","↑","↓","→"})addKey(r5,label);
         refreshLabels();
     }
     private void move(float x,float y) {

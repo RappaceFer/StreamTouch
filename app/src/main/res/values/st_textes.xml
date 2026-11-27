@@ -93,7 +93,7 @@
     <string name="st_annuler">Cancel</string>
     <string name="st_fermer">Close</string>
     <string name="st_ap_titre">StreamTouch — Made in Rappace</string>
-    <string name="st_ap_texte">Touch controls, sticks, round menu and keyboard: written for Rappace (Streaming Touch).\n\nStreaming: Moonlight, free software under the GPL v3 license (moonlight-stream.org).\nIcons: game-icons.net (Lorc, Delapouite and others), CC BY 3.0 license.\nSuper Resolution: Snapdragon Game Super Resolution, © Qualcomm Innovation Center, BSD 3-clause license.\n\nGoes with the WoW addon “Streaming Touch”.</string>
+    <string name="st_ap_texte">Touch controls, sticks, Grimoire and keyboard: written for Rappace (Streaming Touch).\n\nStreaming: Moonlight, free software under the GPL v3 license (moonlight-stream.org).\nIcons: game-icons.net (Lorc, Delapouite and others), CC BY 3.0 license.\nSuper Resolution: Snapdragon Game Super Resolution, © Qualcomm Innovation Center, BSD 3-clause license.\n\nGoes with the WoW addon “Streaming Touch”.</string>
     <string name="st_ap_version" formatted="true">Version %1$s</string>
     <string name="st_b_titre">Customize buttons</string>
     <string name="st_b_aide">Tap a button, then choose its shape, color and icon. It applies on screen right away.</string>
@@ -128,4 +128,9 @@
     <string name="st_r_exporter">📤 Export my settings</string>
     <string name="st_r_exporte">Settings saved in Downloads: StreamTouch-reglages.json</string>
     <string name="st_lanceur_wow_pret">WoW icon added to your app list: long press it there to place it on your home screen.</string>
+    <string name="st_resolution_auto">Automatic (this screen\'s size)</string>
+    <string name="st_p_pip_titre">Small window when leaving the app</string>
+    <string name="st_p_pip_resume">Swipe home and the game keeps running in a small window instead of disconnecting. Tap it to come back.</string>
+    <string name="st_a_grimoire">Grimoire</string>
+    <string name="st_a_grimoire_aide">All game settings in a side panel</string>
 </resources>

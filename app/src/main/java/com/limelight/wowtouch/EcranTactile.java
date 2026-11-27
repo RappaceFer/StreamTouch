@@ -95,7 +95,7 @@ public final class EcranTactile extends View implements Doigts.Sortie, ActionTac
     private final StickTapGesture gesteCam = new StickTapGesture();
     private final Runnable appuiCam = this::ciblerDepuisCamera;
     // État.
-    private boolean manette = true, plonge, guide, avaleGeste, edition;
+    private boolean manette = false, plonge, guide, avaleGeste, edition;
     private TouchKey prochainModif, modifTenu;
     private long dernierEchap = -1000, dernierClavier = -1000;
     private int opacite = 100;
@@ -178,6 +178,12 @@ public final class EcranTactile extends View implements Doigts.Sortie, ActionTac
     @Override protected void onSizeChanged(int l, int h, int ancienL, int ancienH) {
         annuler();
         rafraichir();
+        // Autour de la poignée dorée, Android laisse le doigt à l'appli (pas de geste retour) : on tire le Grimoire.
+        if (android.os.Build.VERSION.SDK_INT >= 29 && l > 0 && h > 0) {
+            int demi = Math.round(95 * dp), y = h / 2;
+            setSystemGestureExclusionRects(java.util.Collections.singletonList(
+                    new android.graphics.Rect(l - Math.round(28 * dp), Math.max(0, y - demi), l, Math.min(h, y + demi))));
+        }
     }
 
     @Override public WindowInsets onApplyWindowInsets(WindowInsets bords) {
@@ -288,6 +294,7 @@ public final class EcranTactile extends View implements Doigts.Sortie, ActionTac
     @Override public boolean onTouchEvent(MotionEvent ev) {
         if (ev.isFromSource(InputDevice.SOURCE_MOUSE)) return false;
         if (edition) return deplacement(ev);
+        if (bord(ev)) return true;
         int geste = ev.getActionMasked(), rang = ev.getActionIndex(), id = ev.getPointerId(rang);
         if (!manette && joystickCamera(ev, geste, rang, id)) {
             invalidate();
@@ -503,7 +510,26 @@ public final class EcranTactile extends View implements Doigts.Sortie, ActionTac
         return true;
     }
 
+    // Double tap : deux appuis rapides au même endroit.
+    private long dernierTap = -1000;
+    private float tapX, tapY;
+
     @Override public void clic(float x, float y) {
+        long t = SystemClock.uptimeMillis();
+        boolean double_ = t - dernierTap < 380 && Math.hypot(x - tapX, y - tapY) < 45 * dp;
+        int mode = TouchConfig.doubleTap(getContext());
+        if (double_ && mode != TouchConfig.DOUBLE_RIEN) {
+            dernierTap = -1000;
+            if (mode == TouchConfig.DOUBLE_DROIT) { clicDroit(tapX, tapY); return; }
+            // Double-clic : le 2e clic tombe pile au même endroit que le 1er, pour que Windows le compte.
+            x = tapX;
+            y = tapY;
+            eclat(x, y);
+        } else {
+            dernierTap = t;
+            tapX = x;
+            tapY = y;
+        }
         if (!pointer(x, y)) return;
         ondeX = x;
         ondeY = y;
@@ -619,7 +645,7 @@ public final class EcranTactile extends View implements Doigts.Sortie, ActionTac
         if (jeu.isFinishing() || !jeu.hasWindowFocus()) return;
         annuler();
         guide = false;
-        if (!menu.ouvert()) menu.ouvrir();
+        jeu.ouvrirGrimoire();
     }
 
     private void basculerMode() {
@@ -635,9 +661,9 @@ public final class EcranTactile extends View implements Doigts.Sortie, ActionTac
             dernierClavier = -1000;
             basculerMode();
         } else dernierClavier = maintenant;
-        if (clavier == null) clavier = TouchConfig.clavierSuisse(jeu)
-                ? new PcKeyboardOverlay(jeu, pc, (FrameLayout) getParent())
-                : new ClavierTelephone(jeu, pc, (FrameLayout) getParent());
+        // Toujours le clavier PC dessiné ; sa disposition suit la langue (Disposition). Le clavier du téléphone
+        // reste au bouton « Android » de la barre du clavier.
+        if (clavier == null) clavier = new PcKeyboardOverlay(jeu, pc, (FrameLayout) getParent());
         clavier.toggle();
     }
 
@@ -685,6 +711,7 @@ public final class EcranTactile extends View implements Doigts.Sortie, ActionTac
                 guide = true;
                 break;
             case FILTRE: changerFiltre(); break;
+            case GRIMOIRE: jeu.ouvrirGrimoire(); break;
             case A_PROPOS: post(this::aPropos); break;
             case CLAVIER: basculerClavier(); break;
         }
@@ -708,14 +735,7 @@ public final class EcranTactile extends View implements Doigts.Sortie, ActionTac
                 aide = jeu.getString(raison);
             }
         }
-        int nom;
-        switch (a) {
-            case CINEMA: nom = R.string.st_f_cinema; break;
-            case ECLATANT: nom = R.string.st_f_eclatant; break;
-            case NET: nom = R.string.st_f_net; break;
-            default: nom = R.string.st_f_aucun; break;
-        }
-        banniere(dessin(R.drawable.st_ic_palette), jeu.getString(R.string.st_f_titre, jeu.getString(nom)), aide);
+        banniere(dessin(R.drawable.st_ic_palette), jeu.getString(R.string.st_f_titre, a.nom(jeu)), aide);
     }
 
     private void stylesBoutons() {
@@ -734,10 +754,12 @@ public final class EcranTactile extends View implements Doigts.Sortie, ActionTac
         } catch (Exception ignore) {
             // Pas grave : on affiche sans numéro.
         }
-        Parure.habiller(new AlertDialog.Builder(jeu).setTitle(jeu.getString(R.string.st_ap_titre))
+        AlertDialog fenetre = new AlertDialog.Builder(jeu).setTitle(jeu.getString(R.string.st_ap_titre))
                 .setMessage(jeu.getString(R.string.st_ap_texte)
                         + (version.isEmpty() ? "" : "\n\n" + jeu.getString(R.string.st_ap_version, version)))
-                .setPositiveButton(jeu.getString(R.string.st_fermer), null).show(), dp);
+                .setPositiveButton(jeu.getString(R.string.st_fermer), null).show();
+        Parure.habiller(fenetre, dp);
+        Parure.centrer(fenetre);
     }
 
     // ---------------------------------------------------------------- Réglages
@@ -985,6 +1007,7 @@ public final class EcranTactile extends View implements Doigts.Sortie, ActionTac
 
     @Override protected void onDraw(Canvas toile) {
         if (commandes == null) return;
+        poignee(toile);
         long maintenant = SystemClock.uptimeMillis();
         doigts.avance(maintenant);
         boolean anime = false;
@@ -1098,10 +1121,12 @@ public final class EcranTactile extends View implements Doigts.Sortie, ActionTac
         Parure.bouton(toile, pinceau, r, Parure.coin(forme, r, dp), dp, ButtonStyles.color(c, id), enfonce, vif, dessus);
         Drawable icone = id == Commandes.SAUT && plonge ? plongee : icones[id];
         String nom = id == Commandes.MENU && prochainModif != null ? nomModif(prochainModif)
-                : id == Commandes.SAUT && plonge ? jeu.getString(R.string.st_plonger) : nom(id);
-        if (ButtonStyles.label(c, id)) dessinerIconeNom(toile, dessus, icone, nom, vif || enfonce);
+                : id == Commandes.SAUT && plonge ? jeu.getString(R.string.st_plonger)
+                : ButtonStyles.nom(c, id) != null ? ButtonStyles.nom(c, id) : nom(id);
+        int[] email = ButtonStyles.emailCouleurs(c, id);
+        if (ButtonStyles.label(c, id)) dessinerIconeNom(toile, dessus, icone, nom, vif || enfonce, email);
         else Parure.icone(toile, pinceau, icone, dessus.centerX(), dessus.centerY(),
-                Math.min(dessus.width(), dessus.height()) * .66f, dp, vif || enfonce, 255);
+                Math.min(dessus.width(), dessus.height()) * .66f, dp, vif || enfonce, 255, email);
         if (id == Commandes.CIBLE) {
             // Maintenir Cible vise le cadavre le plus proche : une petite tête de mort dans le coin le rappelle.
             float rr = r.width() * .19f, cx = r.right - rr * .55f, cy = r.top + rr * .55f;
@@ -1113,6 +1138,10 @@ public final class EcranTactile extends View implements Doigts.Sortie, ActionTac
 
     /** L'icône et le nom en lettres d'or sur le cuir du bouton. */
     private void dessinerIconeNom(Canvas toile, RectF zone, Drawable icone, String nom, boolean vif) {
+        dessinerIconeNom(toile, zone, icone, nom, vif, null);
+    }
+
+    private void dessinerIconeNom(Canvas toile, RectF zone, Drawable icone, String nom, boolean vif, int[] email) {
         float taille = commandes.police * 1.05f;
         Parure.lettres(plume, taille, vif ? Parure.OR_CLAIR : Parure.CREME, dp);
         plume.setTextAlign(Paint.Align.CENTER);
@@ -1120,7 +1149,7 @@ public final class EcranTactile extends View implements Doigts.Sortie, ActionTac
         if (large > zone.width() * .88f) plume.setTextSize(taille * zone.width() * .88f / large);
         float cote = Math.min(zone.width(), zone.height()) * .56f, ecart = zone.height() * .02f;
         float haut = zone.centerY() - (cote + ecart + plume.getTextSize()) / 2;
-        Parure.icone(toile, pinceau, icone, zone.centerX(), haut + cote / 2, cote, dp, vif, 255);
+        Parure.icone(toile, pinceau, icone, zone.centerX(), haut + cote / 2, cote, dp, vif, 255, email);
         toile.drawText(nom, zone.centerX(), haut + cote + ecart - plume.ascent() * .92f, plume);
     }
 
@@ -1408,5 +1437,75 @@ public final class EcranTactile extends View implements Doigts.Sortie, ActionTac
         eclatY = y;
         eclatDebut = SystemClock.uptimeMillis();
         invalidate(); // onDraw continue l'animation tant que l'éclat dure
+    }
+
+    // ---------------------------------------------------------------- Pour le Grimoire
+
+    /** Le joueur est en mode manette (commandes tactiles cachées). */
+    public boolean modeManette() { return manette; }
+
+    /** Après un changement de taille ou de transparence : redessine les commandes. */
+    public void actualiser() {
+        appliquerStyles();
+        rafraichir();
+    }
+
+    /** Choix du clavier : le prochain appui sur Clavier ouvre le nouveau. */
+    public void choisirDisposition(String cle) {
+        Disposition.choisir(getContext(), cle);
+        if (clavier != null) clavier.hide();
+        clavier = null;
+    }
+
+    // ---------------------------------------------------------------- Le bord droit ouvre le Grimoire
+
+    private int doigtBord = -1;
+    private float bordX;
+    private final android.graphics.Paint pinceauPoignee = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+
+    /** Un doigt posé tout au bord droit puis tiré vers la gauche ouvre le Grimoire. Rend true pour avaler ce doigt. */
+    private boolean bord(MotionEvent ev) {
+        int geste = ev.getActionMasked(), rang = ev.getActionIndex(), id = ev.getPointerId(rang);
+        float bande = 28 * dp;
+        switch (geste) {
+            case MotionEvent.ACTION_DOWN:
+            case MotionEvent.ACTION_POINTER_DOWN:
+                if (doigtBord == -1 && ev.getX(rang) >= getWidth() - bande) {
+                    doigtBord = id;
+                    bordX = ev.getX(rang);
+                    return true;
+                }
+                return false;
+            case MotionEvent.ACTION_MOVE:
+                if (doigtBord != -1) {
+                    int i = ev.findPointerIndex(doigtBord);
+                    if (i >= 0 && bordX - ev.getX(i) > 36 * dp) {
+                        doigtBord = -2; // ouvert : le reste du geste est avalé
+                        annuler();
+                        jeu.ouvrirGrimoire();
+                    }
+                }
+                return false;
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_POINTER_UP:
+            case MotionEvent.ACTION_CANCEL:
+                if (geste == MotionEvent.ACTION_CANCEL || geste == MotionEvent.ACTION_UP) {
+                    boolean avale = doigtBord != -1;
+                    doigtBord = -1;
+                    return avale && ev.getPointerCount() <= 1;
+                }
+                if (id == doigtBord) { doigtBord = -1; return true; }
+                return false;
+        }
+        return false;
+    }
+
+    /** Petite languette dorée au milieu du bord droit : « tire ici ». */
+    private void poignee(Canvas toile) {
+        float h = getHeight(), w = getWidth();
+        if (h <= 0) return;
+        float haut = 54 * dp, large = 4 * dp, y = h / 2f;
+        pinceauPoignee.setColor(0x66F5D27A);
+        toile.drawRoundRect(w - large - 3 * dp, y - haut / 2, w - 3 * dp, y + haut / 2, large, large, pinceauPoignee);
     }
 }

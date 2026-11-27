@@ -93,7 +93,7 @@
     <string name="st_annuler">Annuler</string>
     <string name="st_fermer">Fermer</string>
     <string name="st_ap_titre">StreamTouch — Made in Rappace</string>
-    <string name="st_ap_texte">Commandes tactiles, joysticks, menu rond et clavier : écrits pour Rappace (Streaming Touch).\n\nStreaming : Moonlight, logiciel libre sous licence GPL v3 (moonlight-stream.org).\nIcônes : game-icons.net (Lorc, Delapouite et d\'autres), licence CC BY 3.0.\nSuper Résolution : Snapdragon Game Super Resolution, © Qualcomm Innovation Center, licence BSD 3 clauses.\n\nVa de pair avec l\'addon WoW « Streaming Touch ».</string>
+    <string name="st_ap_texte">Commandes tactiles, joysticks, Grimoire et clavier : écrits pour Rappace (Streaming Touch).\n\nStreaming : Moonlight, logiciel libre sous licence GPL v3 (moonlight-stream.org).\nIcônes : game-icons.net (Lorc, Delapouite et d\'autres), licence CC BY 3.0.\nSuper Résolution : Snapdragon Game Super Resolution, © Qualcomm Innovation Center, licence BSD 3 clauses.\n\nVa de pair avec l\'addon WoW « Streaming Touch ».</string>
     <string name="st_ap_version" formatted="true">Version %1$s</string>
     <string name="st_b_titre">Personnaliser les boutons</string>
     <string name="st_b_aide">Touche un bouton, puis choisis sa forme, sa couleur et son icône. Ça s\'applique tout de suite à l\'écran.</string>
@@ -128,4 +128,9 @@
     <string name="st_r_exporter">📤 Exporter mes réglages</string>
     <string name="st_r_exporte">Réglages enregistrés dans Téléchargements : StreamTouch-reglages.json</string>
     <string name="st_lanceur_wow_pret">Icône « WoW » ajoutée à la liste des applis : appui long dessus pour la poser sur l\'écran d\'accueil.</string>
+    <string name="st_resolution_auto">Automatique (taille de cet écran)</string>
+    <string name="st_p_pip_titre">Petite fenêtre en quittant l\'appli</string>
+    <string name="st_p_pip_resume">Quand tu glisses pour sortir, le jeu reste dans une petite fenêtre au lieu de se déconnecter. Touche-la pour revenir.</string>
+    <string name="st_a_grimoire">Grimoire</string>
+    <string name="st_a_grimoire_aide">Tous les réglages de la partie, dans un panneau</string>
 </resources>

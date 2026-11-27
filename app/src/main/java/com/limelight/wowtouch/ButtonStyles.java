@@ -83,8 +83,26 @@ final class ButtonStyles {
     static void setIcon(Context c, int key, String value) { prefs(c).edit().putString("icon_" + key, value).apply(); }
     static void setLabel(Context c, int key, boolean value) { prefs(c).edit().putBoolean("label_" + key, value).apply(); }
 
+    /** Le nom affiché choisi par le joueur, ou null pour garder le nom d'origine. */
+    static String nom(Context c, int key) {
+        String n = prefs(c).getString("nom_" + key, "");
+        return n.trim().isEmpty() ? null : n.trim();
+    }
+    static void setNom(Context c, int key, String value) {
+        prefs(c).edit().putString("nom_" + key, value == null ? "" : value).apply();
+    }
+
+    /** L'émail de l'icône : 0 = l'or du thème, sinon une couleur de Parure.EMAUX. */
+    static int email(Context c, int key) { return prefs(c).getInt("email_" + key, 0); }
+    static void setEmail(Context c, int key, int value) { prefs(c).edit().putInt("email_" + key, value).apply(); }
+    static int[] emailCouleurs(Context c, int key) {
+        int e = email(c, key);
+        return e > 0 && e < Parure.EMAUX.length ? Parure.EMAUX[e] : null;
+    }
+
     static void reset(Context c, int key) {
-        prefs(c).edit().remove("shape_" + key).remove("color_" + key).remove("icon_" + key).remove("label_" + key).apply();
+        prefs(c).edit().remove("shape_" + key).remove("color_" + key).remove("icon_" + key).remove("label_" + key)
+                .remove("email_" + key).remove("nom_" + key).apply();
     }
 
     static void resetAll(Context c) { prefs(c).edit().clear().apply(); }

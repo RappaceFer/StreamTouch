@@ -120,6 +120,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private KeyboardTranslator keyboardTranslator;
     private VirtualController virtualController;
     private EcranTactile wowTouchView;
+    private com.limelight.wowtouch.Grimoire grimoire;
     private FiltreVideo filtreVideo;
     private MoonlightTouchBridge wowTouchBridge;
 
@@ -213,6 +214,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private TextView notificationOverlayView;
     private int requestedNotificationOverlayVisibility = View.GONE;
     private TextView performanceOverlayView;
+    private com.limelight.wowtouch.Statistiques statsPanneau;
 
     private MediaCodecDecoderRenderer decoderRenderer;
     private boolean reportedCrash;
@@ -338,6 +340,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         notificationOverlayView = findViewById(R.id.notificationOverlay);
 
         performanceOverlayView = findViewById(R.id.performanceOverlay);
+        // StreamTouch : le panneau Made in Rappace prend la place du texte de Moonlight.
+        statsPanneau = new com.limelight.wowtouch.Statistiques(this);
+        ((android.view.ViewGroup) performanceOverlayView.getParent()).addView(statsPanneau);
 
         inputCaptureProvider = InputCaptureManager.getInputCaptureProvider(this, this);
 
@@ -437,7 +442,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
         // Check if the user has enabled performance stats overlay
         if (prefConfig.enablePerfOverlay) {
-            performanceOverlayView.setVisibility(View.VISIBLE);
+            statsPanneau.montrer(View.VISIBLE);
         }
 
         decoderRenderer = new MediaCodecDecoderRenderer(
@@ -575,6 +580,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             wowTouchBridge = new MoonlightTouchBridge(conn, streamView, prefConfig.width, prefConfig.height);
             wowTouchView = new EcranTactile(this, wowTouchBridge);
             ((FrameLayout)streamView.getParent()).addView(wowTouchView);
+            grimoire = new com.limelight.wowtouch.Grimoire(this, wowTouchView);
+            ((FrameLayout)streamView.getParent()).addView(grimoire, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+            if (statsPanneau != null && statsPanneau.getVisibility() == View.VISIBLE) statsPanneau.bringToFront();
         }
         if (prefConfig.onscreenController && wowTouchView == null) {
             virtualController = new VirtualController(controllerHandler,
@@ -666,7 +674,14 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     virtualController.hide();
                 }
 
-                performanceOverlayView.setVisibility(View.GONE);
+                // StreamTouch : pas de joysticks ni de clavier dans la petite fenêtre
+                if (wowTouchView != null) {
+                    wowTouchView.annuler();
+                    wowTouchView.setVisibility(View.GONE);
+                }
+                if (grimoire != null) grimoire.fermer();
+
+                statsPanneau.montrer(View.GONE);
                 notificationOverlayView.setVisibility(View.GONE);
 
                 // Disable sensors while in PiP mode
@@ -684,8 +699,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     virtualController.show();
                 }
 
+                if (wowTouchView != null) {
+                    wowTouchView.setVisibility(View.VISIBLE);
+                }
+
                 if (prefConfig.enablePerfOverlay) {
-                    performanceOverlayView.setVisibility(View.VISIBLE);
+                    statsPanneau.montrer(View.VISIBLE);
                 }
 
                 notificationOverlayView.setVisibility(requestedNotificationOverlayVisibility);
@@ -2792,7 +2811,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                performanceOverlayView.setText(text);
+                statsPanneau.texte(text);
             }
         });
     }
@@ -2824,4 +2843,66 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 return false;
         }
     }
+
+    // ---------------------------------------------------------------- StreamTouch : le Grimoire
+
+    public void ouvrirGrimoire() {
+        if (grimoire != null) grimoire.ouvrir();
+    }
+
+    @Override
+    public void onBackPressed() {
+        // Le geste retour d'Android (glisser depuis un bord) ouvre le Grimoire au lieu de quitter la partie ;
+        // on se déconnecte par le bouton rouge du Grimoire.
+        if (grimoire != null) {
+            if (grimoire.ouvert()) { if (!grimoire.retour()) grimoire.fermer(); }
+            else grimoire.ouvrir();
+            return;
+        }
+        super.onBackPressed();
+    }
+
+    /** Choisit l'ambiance d'image ; rend la raison si elle ne peut pas s'afficher tout de suite, sinon null. */
+    public String choisirAmbiance(FiltreVideo.Ambiance a) {
+        if (FiltreVideo.choisir(this, a)) return null;
+        int raison = allumerFiltre();
+        if (raison == R.string.st_f_echec) return getString(raison) + " : " + FiltreVideo.derniereErreur();
+        return raison != 0 ? getString(raison) : null;
+    }
+
+    public boolean statsVisibles() { return prefConfig.enablePerfOverlay; }
+
+    public void montrerStats(boolean oui) {
+        prefConfig.enablePerfOverlay = oui;
+        android.preference.PreferenceManager.getDefaultSharedPreferences(this).edit().putBoolean("checkbox_enable_perf_overlay", oui).apply();
+        statsPanneau.montrer(oui ? View.VISIBLE : View.GONE);
+    }
+
+    public void replacerStats() {
+        if (statsPanneau != null) statsPanneau.replacer();
+    }
+
+    public boolean pipActive() { return prefConfig.enablePip; }
+
+    public void reglerPip(boolean oui) {
+        android.preference.PreferenceManager.getDefaultSharedPreferences(this).edit().putBoolean("checkbox_enable_pip", oui).apply();
+        prefConfig.enablePip = oui;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) setPictureInPictureParams(getPictureInPictureParams(oui && connected));
+        else autoEnterPip = oui && connected;
+    }
+
+    public void petiteFenetre() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
+        try {
+            enterPictureInPictureMode(getPictureInPictureParams(false));
+        } catch (Exception e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public String infosStream() {
+        return prefConfig.width + "×" + prefConfig.height + " · " + prefConfig.fps + " i/s · " + (prefConfig.bitrate / 1000) + " Mb/s";
+    }
+
+    public void deconnecter() { finish(); }
 }

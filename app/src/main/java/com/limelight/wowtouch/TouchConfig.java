@@ -70,8 +70,20 @@ public final class TouchConfig {
         return choix == CLAVIER_SUISSE;
     }
     /** Le mode au lancement du jeu : tactile (par défaut) ou manette. */
-    public static boolean demarrageManette(Context c) { return prefs(c).getBoolean("touch_start_controller", false); }
+    public static boolean demarrageManette(Context c) {
+        SharedPreferences p = prefs(c);
+        if (!p.getBoolean("st_demarrage_tactile_v2", false)) {
+            // Une seule fois : tout le monde repart en mode tactile au lancement (on peut rechoisir dans le Grimoire).
+            p.edit().putBoolean("touch_start_controller", false).putBoolean("st_demarrage_tactile_v2", true).apply();
+            return false;
+        }
+        return p.getBoolean("touch_start_controller", false);
+    }
     public static void setDemarrageManette(Context c, boolean v) { prefs(c).edit().putBoolean("touch_start_controller", v).apply(); }
+    /** Double tap sur l'écran : 0 = double-clic gauche, 1 = clic droit, 2 = rien de spécial (deux clics). */
+    public static final int DOUBLE_CLIC = 0, DOUBLE_DROIT = 1, DOUBLE_RIEN = 2;
+    public static int doubleTap(Context c) { return prefs(c).getInt("touch_double_tap", DOUBLE_CLIC); }
+    public static void setDoubleTap(Context c, int v) { prefs(c).edit().putInt("touch_double_tap", v).apply(); }
     public static void resetControlPositions(Context c){
         SharedPreferences.Editor e=prefs(c).edit();
         for(int i=-1;i<20;i++){e.remove("touch_control_"+i+"_x");e.remove("touch_control_"+i+"_y");}

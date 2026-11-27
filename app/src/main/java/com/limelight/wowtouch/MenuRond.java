@@ -29,9 +29,8 @@ import java.util.Map;
  */
 final class MenuRond {
     private static final int MILIEU = -1, PLATEAU = -2, DEHORS = -3, RIEN = -100;
-    private static final ActionTactile[] ACTIONS = {ActionTactile.MODE_MANETTE, ActionTactile.BOUTONS,
-            ActionTactile.DEPLACER, ActionTactile.REGLAGES, ActionTactile.COURSE_AUTO, ActionTactile.PLONGER,
-            ActionTactile.MAJ, ActionTactile.CTRL, ActionTactile.ALT, ActionTactile.FILTRE, ActionTactile.GUIDE, ActionTactile.A_PROPOS};
+    private static final ActionTactile[] ACTIONS = {ActionTactile.GRIMOIRE, ActionTactile.MODE_MANETTE,
+            ActionTactile.BOUTONS, ActionTactile.DEPLACER, ActionTactile.FILTRE, ActionTactile.GUIDE, ActionTactile.A_PROPOS};
 
     private final Activity activite;
     private final ActionTactile.Hote hote;
