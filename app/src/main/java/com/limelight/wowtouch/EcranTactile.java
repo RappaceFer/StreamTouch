@@ -514,10 +514,31 @@ public final class EcranTactile extends View implements Doigts.Sortie, ActionTac
     private long dernierTap = -1000;
     private float tapX, tapY;
 
+    private Runnable clicEnAttente;
+
     @Override public void clic(float x, float y) {
         long t = SystemClock.uptimeMillis();
         boolean double_ = t - dernierTap < 380 && Math.hypot(x - tapX, y - tapY) < 45 * dp;
         int mode = TouchConfig.doubleTap(getContext());
+        if (mode == TouchConfig.DOUBLE_DROIT) {
+            // Le 1er appui attend un peu : s'il en vient un 2e, seul le clic droit part (vendre, ramasser, parler)
+            // sans que le clic gauche ait pris l'objet avant. Sinon, le clic gauche part normalement.
+            if (double_ && clicEnAttente != null) {
+                removeCallbacks(clicEnAttente);
+                clicEnAttente = null;
+                dernierTap = -1000;
+                clicDroit(tapX, tapY);
+                return;
+            }
+            if (clicEnAttente != null) { removeCallbacks(clicEnAttente); clicEnAttente.run(); }
+            dernierTap = t;
+            tapX = x;
+            tapY = y;
+            final float fx = x, fy = y;
+            clicEnAttente = () -> { clicEnAttente = null; envoyerClic(fx, fy); };
+            postDelayed(clicEnAttente, 300);
+            return;
+        }
         if (double_ && mode != TouchConfig.DOUBLE_RIEN) {
             dernierTap = -1000;
             if (mode == TouchConfig.DOUBLE_DROIT) { clicDroit(tapX, tapY); return; }
@@ -530,6 +551,11 @@ public final class EcranTactile extends View implements Doigts.Sortie, ActionTac
             tapX = x;
             tapY = y;
         }
+        envoyerClic(x, y);
+    }
+
+    /** Le clic gauche lui-même, à cet endroit de l'écran. */
+    private void envoyerClic(float x, float y) {
         if (!pointer(x, y)) return;
         ondeX = x;
         ondeY = y;
@@ -1460,19 +1486,22 @@ public final class EcranTactile extends View implements Doigts.Sortie, ActionTac
     // ---------------------------------------------------------------- Le bord droit ouvre le Grimoire
 
     private int doigtBord = -1;
-    private float bordX;
+    private float bordX, bordY;
     private final android.graphics.Paint pinceauPoignee = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
 
     /** Un doigt posé tout au bord droit puis tiré vers la gauche ouvre le Grimoire. Rend true pour avaler ce doigt. */
     private boolean bord(MotionEvent ev) {
         int geste = ev.getActionMasked(), rang = ev.getActionIndex(), id = ev.getPointerId(rang);
-        float bande = 28 * dp;
+        float bande = 22 * dp;
         switch (geste) {
             case MotionEvent.ACTION_DOWN:
             case MotionEvent.ACTION_POINTER_DOWN:
-                if (doigtBord == -1 && ev.getX(rang) >= getWidth() - bande) {
+                // Seulement autour de la languette dorée (le reste du bord reste au jeu : minicarte, addons...).
+                if (doigtBord == -1 && ev.getX(rang) >= getWidth() - bande
+                        && Math.abs(ev.getY(rang) - getHeight() / 2f) <= 95 * dp) {
                     doigtBord = id;
                     bordX = ev.getX(rang);
+                    bordY = ev.getY(rang);
                     return true;
                 }
                 return false;
@@ -1491,10 +1520,12 @@ public final class EcranTactile extends View implements Doigts.Sortie, ActionTac
             case MotionEvent.ACTION_CANCEL:
                 if (geste == MotionEvent.ACTION_CANCEL || geste == MotionEvent.ACTION_UP) {
                     boolean avale = doigtBord != -1;
+                    // Juste touché sans tirer : c'est un clic normal sur le jeu à cet endroit.
+                    if (doigtBord >= 0 && geste == MotionEvent.ACTION_UP) clic(bordX, bordY);
                     doigtBord = -1;
                     return avale && ev.getPointerCount() <= 1;
                 }
-                if (id == doigtBord) { doigtBord = -1; return true; }
+                if (id == doigtBord) { doigtBord = -1; clic(bordX, bordY); return true; }
                 return false;
         }
         return false;

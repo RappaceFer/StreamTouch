@@ -65,8 +65,8 @@ android {
 
             applicationId "org.rappace.streamtouch"
             dimension "root"
-            versionName "1.1.3"
-            versionCode 361
+            versionName "1.1.4"
+            versionCode 362
             buildConfigField "boolean", "ROOT_BUILD", "false"
         }
     }
